@@ -128,7 +128,7 @@ impl Display for LythologyCoordinate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{LythologyColumns, LythologyInformation, LythologyObject};
+    use crate::excels::lytho_reader::{LythologyColumns, LythologyInformation, LythologyObject};
     use std::collections::HashMap;
 
     #[test]

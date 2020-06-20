@@ -128,7 +128,7 @@ impl Display for RawSampleCoordinate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{RawSampleColumns, RawSampleInformation, RawSampleObject};
+    use crate::excels::rawsample_reader::{RawSampleColumns, RawSampleInformation, RawSampleObject};
     use std::collections::HashMap;
 
     #[test]

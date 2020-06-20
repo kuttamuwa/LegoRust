@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use std::error::Error;
-use csv::{Reader, StringRecord};
-use std::hash::Hash;
 use std::fmt::{Display, Formatter};
 use std::fmt;
+use std::hash::Hash;
 use std::string::ToString;
 
-struct DrillObject {
+use csv::{Reader, StringRecord};
+
+pub struct DrillObject {
     info: DrillInformation,
     data: Vec<Drill>,
 }
@@ -19,6 +20,7 @@ impl DrillObject {
         }
     }
 }
+
 
 struct DrillInformation {
     path: String,
@@ -132,11 +134,13 @@ impl Display for DrillCoordinate {
 
 #[cfg(test)]
 mod tests {
+    use crate::excels::drill_reader::{DrillColumns, DrillInformation, DrillObject};
+    use std::collections::HashMap;
 
     #[test]
     fn running_test() {
         // path
-        let drill_csv_path = String::from(r"C:\Users\umut\CLionProjects\LegoRust\tests\data\excels4\sondaj.csv");
+        let drill_csv_path = String::from(r"/home/umut/CLionProjects/LegoRust/tests/data/excels4/sondaj.csv");
 
         // columns
         let mut columns: HashMap<DrillColumns, String> = HashMap::new();
@@ -150,9 +154,11 @@ mod tests {
         // data
         let drill_information = DrillInformation::new(drill_csv_path,
                                                       "Cu".to_string(), ";".to_string(), columns);
-        let drill_objects = drill_information.read().expect("Drill file cannot be read and parsed !");
-        println!("drill rows : {:?}", drill_objects);
+        let drill_vectors = drill_information.read().expect("Drill file cannot be read and parsed !");
+        println!("drill rows : {:?}", drill_vectors);
 
-        let drill_object = DrillObject::new(drill_information, drill_objects);
+        let drill_object = DrillObject::new(drill_information, drill_vectors);
+
+        // println!("Drill object : {}", drill_object);
     }
 }

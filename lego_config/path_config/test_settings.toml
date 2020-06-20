@@ -1,0 +1,6 @@
+[paths]
+slope_csv_path     = "tests/data/excels4/egim.csv"
+lythology_csv_path = "tests/data/excels4/litoloji.csv"
+rawsample_csv_path = "tests/data/excels4/hamorneklem.csv"
+drill_csv_path     = "tests/data/excels4/sondaj.csv"
+

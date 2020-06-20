@@ -7,5 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-csv = "1.1.3"
-time = "0.2.16"
+data_management = {path = "../LegoRust/data_management"}
+lego_config = {path = "../LegoRust/lego_config"}

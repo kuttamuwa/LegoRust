@@ -1,12 +1,8 @@
-use std::collections::HashMap;
 use std::error::Error;
-use csv::{Reader, StringRecord, ErrorKind};
-use std::hash::Hash;
-use std::fmt::{Display, Formatter};
-use std::{fmt, fs};
-use std::string::ToString;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
+use std::fmt::{Display, Formatter};
+use std::fmt;
 
 struct CrossObject {
     info: CrossInformation,

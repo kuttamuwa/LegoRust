@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::hash::Hash;
 use std::string::ToString;
+use lego_config;
 
 use csv::{Reader, StringRecord};
 
@@ -32,6 +33,7 @@ struct DrillInformation {
 impl DrillInformation {
     fn new(path: String, mining_type: String, seperator: String,
            columns: HashMap<DrillColumns, String>) -> DrillInformation {
+        lego_config::
         DrillInformation {
             path,
             mining_type,

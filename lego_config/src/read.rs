@@ -11,11 +11,19 @@ mod tests {
     use crate::read::{LConfig, ConfigPathEnums};
     use config::{Config, File, Value};
 
-   //  #[test]
-   //  fn create_and_read_sections() {
-   //      let csv_section_name = String::from("excel_paths");
-   //      let str_section_name = String::from("str_paths");
-   // }
+    #[test]
+    fn create_and_read_sections() {
+        let csv_section_name = String::from("excel_paths");
+        let str_section_name = String::from("str_paths");
+
+        let config_object = LConfig::new(TEST_CONFIG_PATH, csv_section_name, str_section_name);
+
+        let csv_object = config_object.create_csvpath_object();
+        let str_object = config_object.create_strpath_object();
+
+        println!("csv object : {:}", csv_object);
+        println!("str object : {:}", str_object);
+   }
 
     #[test]
     fn create_csv_object() {
@@ -68,7 +76,7 @@ pub trait ConfigPathEnums {
 
     fn create_rust_config_object(path: &str) -> Config;  // we will not code config library, customize instead.
 
-    // fn read_excel_and_str_config(&self) -> (CSVPath, STRPath);
+    fn read_excel_and_str_config(&self) -> (CSVPath, STRPath);
     // I added for easy usage. You will add more function like below.
 
     // new data types functions will be added here !
@@ -131,9 +139,9 @@ impl ConfigPathEnums for LConfig {
         s
     }
 
-    // fn read_excel_and_str_config(&self) -> (CSVPath, STRPath){
-    //     (self.create_csvpath_object(), self.create_strpath_object())
-    // }
+    fn read_excel_and_str_config(&self) -> (CSVPath, STRPath){
+        (self.create_csvpath_object(), self.create_strpath_object())
+    }
 
     fn create_csvpath_object(&self) -> CSVPath
     {
@@ -143,7 +151,6 @@ impl ConfigPathEnums for LConfig {
 
         // slope_csv_path: String, lythology_csv_path: String, rawsample_csv_path: String,
         //     drill_csv_path: String
-        println!("csv path table : {:?}", csv_path_table);
         let drill_csv_path = csv_path_table.get("drill_csv_path")
             .expect("asdasda").kind.to_string();
 
@@ -188,5 +195,24 @@ impl fmt::Display for LConfig {
         write!(f, "str section name: {:?} \n\
                    csv section name: {:?} \n\
                    config object : ", self.str_section_name, self.csv_section_name)
+    }
+}
+
+impl fmt::Display for CSVPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "drill csv path: {:?} \n\
+                   rawsample csv path: {:?} \n\
+                   slope csv path : {:?} \n\
+                   lythology csv path : {:?}",
+               self.drill_csv_path, self.rawsample_csv_path,
+               self.slope_csv_path, self.lythology_csv_path)
+    }
+}
+
+impl fmt::Display for STRPath {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "cross section path: {:?} \n\
+                   composite path: {:?} \n\
+                    ", self.cross_section_path, self.composite_path)
     }
 }

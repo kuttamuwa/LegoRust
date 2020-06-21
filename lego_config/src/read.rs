@@ -26,18 +26,9 @@ mod tests {
        csv_object.create_csvpath_object();
 
    }
-
-    #[test]
-    fn config_test() {
-        let mut s = Config::new();
-        s.merge(File::with_name(TEST_CONFIG_PATH));
-
-        let t = s.get_table("excel_paths");
-        println!("t : {:?}", t);
-    }
 }
 
-struct CSVPath {
+pub struct CSVPath {
     // this naming convention will be exactly same with config !
     slope_csv_path: String,
     lythology_csv_path: String,
@@ -46,7 +37,7 @@ struct CSVPath {
 }
 
 impl CSVPath {
-    fn new(drill_csv_path: String, lythology_csv_path: String, slope_csv_path: String, rawsample_csv_path: String,) -> CSVPath {
+    pub fn new(drill_csv_path: String, lythology_csv_path: String, slope_csv_path: String, rawsample_csv_path: String,) -> CSVPath {
         CSVPath {
             slope_csv_path,
             lythology_csv_path,
@@ -55,7 +46,7 @@ impl CSVPath {
         }
     }
 }
-struct STRPath {
+pub struct STRPath {
     // this naming convention will be exactly same with config !
     cross_section_path: String,
     composite_path: String
@@ -81,32 +72,33 @@ pub trait ConfigPathEnums {
     // I added for easy usage. You will add more function like below.
 
     // new data types functions will be added here !
-    fn create_csvpath_object(&self); // -> CSVPath;
+    fn create_csvpath_object(&self)  -> CSVPath;
 
-    // fn create_strpath_object(&self) -> STRPath;
+    fn create_strpath_object(&self) -> STRPath;
 }
 
-trait ConfigErrors {
-    fn csvpath_cannot_be_empty () -> String {
-        "CSVPATH CANNOT BE EMPTY".to_string()
-    }
-
-    fn strpath_cannot_be_empty() -> String {
-        "STRPATH CANNOT BE EMPTY".to_string()
-    }
-
-    fn section_cannot_be_found(section_name: &str) -> String {
-        format!("{} SECTION CANNOT BE FOUND. PLEASE CHECK YOUR CONFIG !", section_name)
-    }
-
-    fn path_cannot_be_found(variable_name: &str) -> String {
-        format!("{} PATH CANNOT BE FOUND. PLEASE CHECK YOUR CONFIG !", variable_name)
-    }
-
-    fn path_must_be_string() -> String {
-        "PATH MUST BE STRING !".to_string()
-    }
-}
+// trait ConfigErrors {
+//     fn csvpath_cannot_be_empty () -> String {
+//         "CSVPATH CANNOT BE EMPTY".to_string()
+//     }
+//
+//     fn strpath_cannot_be_empty() -> String {
+//         "STRPATH CANNOT BE EMPTY".to_string()
+//     }
+//
+//     fn section_cannot_be_found(section_name: &str) -> &'static str {
+//         format!("{} SECTION CANNOT BE FOUND. PLEASE CHECK YOUR CONFIG !", section_name).as_str()
+//         // "SECTION CANNOT BE FOUND. PLEASE CHECK YOUR CONFIG !"
+//     }
+//
+//     fn path_cannot_be_found(variable_name: &str) -> String {
+//         format!("{} PATH CANNOT BE FOUND. PLEASE CHECK YOUR CONFIG !", variable_name)
+//     }
+//
+//     fn path_must_be_string() -> String {
+//         "PATH MUST BE STRING !".to_string()
+//     }
+// }
 
 
 #[derive(Debug)]
@@ -143,60 +135,51 @@ impl ConfigPathEnums for LConfig {
     //     (self.create_csvpath_object(), self.create_strpath_object())
     // }
 
-    fn create_csvpath_object(&self) // -> CSVPath
+    fn create_csvpath_object(&self) -> CSVPath
     {
+        // todo: This will be fixed after ConfigErrors trait will be done
         let csv_path_table = &self.object.get_table(&self.csv_section_name)
-            .expect("");
+            .unwrap();
 
         // slope_csv_path: String, lythology_csv_path: String, rawsample_csv_path: String,
         //     drill_csv_path: String
         println!("csv path table : {:?}", csv_path_table);
-        // let drill_csv_path = csv_path_table.get("drill_csv_path").expect("").into_str().expect("");
+        let drill_csv_path = csv_path_table.get("drill_csv_path")
+            .expect("asdasda").kind.to_string();
 
-        // let lythology_csv_path = csv_path_table.get("lythology_csv_path")
-        //     .expect("")
-        //     .into_str()
-        //     .expect("");
-        //
-        // let slope_csv_path = csv_path_table.get("slope_csv_path")
-        //     .expect("")
-        //     .into_str()
-        //     .expect("");
-        //
-        // let rawsample_csv_path = csv_path_table.get("rawsample_csv_path")
-        //     .expect("")
-        //     .into_str()
-        //     .expect("");
-        //
-        // CSVPath::new(
-        //     drill_csv_path,
-        //     lythology_csv_path,
-        //     slope_csv_path,
-        //     rawsample_csv_path
-        // )
+        let lythology_csv_path = csv_path_table.get("lythology_csv_path")
+           .expect("asdasda").kind.to_string();
+
+        let slope_csv_path = csv_path_table.get("slope_csv_path")
+            .expect("asdasda").kind.to_string();
+
+        let rawsample_csv_path = csv_path_table.get("rawsample_csv_path")
+            .expect("asdasda").kind.to_string();
+
+        CSVPath::new(
+            drill_csv_path,
+            lythology_csv_path,
+            slope_csv_path,
+            rawsample_csv_path
+        )
     }
 
-    // fn create_strpath_object(&self) -> STRPath {
-    //     let str_path_table = &self.object.get_table(&self.str_section_name)
-    //         .expect("").clone();
-    //
-    //     // cross_section_path: String, composite_path: String
-    //
-    //     let cross_section_path = str_path_table.get("cross_section_path")
-    //         .expect("")
-    //         .into_str()
-    //         .expect("");
-    //
-    //     let composite_path = str_path_table.get("composite_path")
-    //         .expect("")
-    //         .into_str()
-    //         .expect("");
-    //
-    //     STRPath::new(
-    //         cross_section_path,
-    //         composite_path
-    //     )
-    // }
+    fn create_strpath_object(&self) -> STRPath {
+        let str_path_table = &self.object.get_table(&self.str_section_name)
+            .unwrap();
+
+        // cross_section_path: String, composite_path: String
+        let cross_section_path = str_path_table.get("cross_section_path")
+            .expect("asdasda").kind.to_string();
+
+        let composite_path = str_path_table.get("composite_path")
+            .expect("asdasda").kind.to_string();
+
+        STRPath::new(
+            cross_section_path,
+            composite_path
+        )
+    }
 }
 
 

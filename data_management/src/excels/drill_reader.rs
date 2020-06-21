@@ -33,7 +33,6 @@ struct DrillInformation {
 impl DrillInformation {
     fn new(path: String, mining_type: String, seperator: String,
            columns: HashMap<DrillColumns, String>) -> DrillInformation {
-        lego_config::
         DrillInformation {
             path,
             mining_type,

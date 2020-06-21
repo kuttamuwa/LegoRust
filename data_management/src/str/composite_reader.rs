@@ -68,7 +68,8 @@ impl CompositeInformation {
                 let cut_taken: f64 = record[8].parse().expect("Son sütun olan kesim alım değeri numerik değere çevirilemedi");
 
                 let coord = CompositeCoordinate::new(x, y, z);
-                let composite = Composite::new(regular_no, coord);
+                let composite = Composite::new(regular_no, tenor, drill_no,
+                cut_from, cut_end, cut_taken, coord);
 
                 composite_objects.push(composite);
             }
@@ -81,13 +82,24 @@ impl CompositeInformation {
 #[derive(Debug)]
 struct Composite {
     group_no: i32,
+    tenor: f64,
+    drill_no: String,
+    cut_from: f64,
+    cut_end: f64,
+    cut_taken: f64,
     coordinate: CompositeCoordinate,
 }
 
 impl Composite {
-    fn new(composite_no: i32, coordinate: CompositeCoordinate) -> Composite {
+    fn new(composite_no: i32, tenor: f64, drill_no: String, cut_from: f64, cut_end: f64,
+           cut_taken: f64,coordinate: CompositeCoordinate) -> Composite {
         Composite {
             group_no: composite_no,
+            tenor,
+            drill_no,
+            cut_from,
+            cut_end,
+            cut_taken,
             coordinate,
         }
     }
@@ -116,6 +128,11 @@ impl CompositeCoordinate {
         }
     }
 }
+// let tenor: f64 = record[4].parse().expect("tenor orani için numerik deger çevirilemedi");
+//                 let drill_no: String = record[5].parse().expect("drill no için text değer çevirilemedi");
+//                 let cut_from: f64 = record[6].parse().expect("kesim başlangıç değeri numeriğe çevirilemedi");
+//                 let cut_end: f64 = record[7].parse().expect("Kesim bitiş değeri numerik değere çevirilemedi");
+//                 let cut_taken: f64 = record[8].parse().expect("Son sütun olan kesim alım değeri numerik değere çevirilemedi");
 
 impl Display for CompositeCoordinate {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

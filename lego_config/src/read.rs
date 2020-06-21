@@ -70,7 +70,7 @@ impl STRPath {
 }
 
 pub trait ConfigPathEnums {
-    fn new(path: &str, csv_section_name: String, str_section_name: String) -> Self;
+    // fn new(path: &str, csv_section_name: String, str_section_name: String) -> Self;
 
     fn read_section(&self, section_name: &str) -> HashMap<String, Value>;
 
@@ -110,14 +110,14 @@ pub trait ConfigPathEnums {
 
 
 #[derive(Debug)]
-struct LConfig {
+pub struct LConfig {
     object: Config,
     csv_section_name: String,
     str_section_name: String
 }
 
-impl ConfigPathEnums for LConfig {
-    fn new(path: &str, csv_section_name: String, str_section_name: String) -> LConfig {
+impl LConfig {
+    pub fn new(path: &str, csv_section_name: String, str_section_name: String) -> LConfig {
         let config_object = LConfig::create_rust_config_object(path);
 
         LConfig {
@@ -126,6 +126,18 @@ impl ConfigPathEnums for LConfig {
             str_section_name
         }
     }
+
+    pub fn create_and_get_csv_object(&self) -> CSVPath {
+        self.create_csvpath_object()
+    }
+
+    pub fn create_and_get_str_object(&self) -> STRPath {
+        self.create_strpath_object()
+    }
+}
+
+impl ConfigPathEnums for LConfig {
+
 
     fn read_section(&self, section_name: &str) -> HashMap<String, Value> {
         self.object.get_table(section_name)

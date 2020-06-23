@@ -5,6 +5,7 @@ use std::hash::Hash;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::string::ToString;
+use lego_config::read::{LegoConfig, DataManagementObjects};
 
 struct LythologyObject {
     info: LythologyInformation,
@@ -12,7 +13,9 @@ struct LythologyObject {
 }
 
 impl LythologyObject {
-    fn new(info: LythologyInformation, data: Vec<Lythology>) -> LythologyObject {
+    fn new(info: LythologyInformation) -> LythologyObject {
+        let data = info.read().expect("Lythology excel okunurken bir hata oluştu !");
+
         LythologyObject {
             info,
             data,
@@ -23,13 +26,13 @@ impl LythologyObject {
 struct LythologyInformation {
     path: String,
     mining_type: String,
-    seperator: String,
-    columns: HashMap<LythologyColumns, String>,
+    seperator: char,
+    columns: HashMap<String, String>, // todo: we will change here to enum
 }
 
 impl LythologyInformation {
-    fn new(path: String, mining_type: String, seperator: String,
-           columns: HashMap<LythologyColumns, String>) -> LythologyInformation {
+    fn new(path: String, mining_type: String, seperator: char,
+           columns: HashMap<String, String>) -> LythologyInformation {
         LythologyInformation {
             path,
             mining_type,
@@ -38,12 +41,27 @@ impl LythologyInformation {
         }
     }
 
+    fn new_from_config(config: &LegoConfig) -> LythologyInformation {
+        // getting mining information
+        let path = config.get_lythology_csv_path();
+        let mining_type = config.get_mining_type();
+        let seperator = config.get_x_csv_seperator("lythology_csv_path");
+        let columns = config.get_x_columns("lythology_columns");
+
+        LythologyInformation {
+            path,
+            mining_type,
+            seperator,
+            columns
+        }
+    }
+
     fn read(&self) -> Result<Vec<Lythology>, Box<dyn Error>> {
         // our data
-        let mut Lythology_objects: Vec<Lythology> = vec![];
+        let mut lythology_objects: Vec<Lythology> = vec![];
 
-        let Lythology_csv_path: &String = &self.path;
-        let mut reader = Reader::from_path(Lythology_csv_path)?;
+        let lythology_csv_path: &String = &self.path;
+        let mut reader = Reader::from_path(lythology_csv_path)?;
 
         // columns
         reader.set_headers(StringRecord::from(vec!["SONDAJNO", "FROM", "TO", "LYTHO"]));
@@ -60,14 +78,14 @@ impl LythologyInformation {
             let drill_no = record[0].to_owned();
             let start: f64 = record[1].parse().expect("numerik deger çevirilemedi");
             let end: f64 = record[2].parse().expect("numerik deger çevirilemedi");
-            let LYTHO: f64 = record[3].parse().expect("numerik deger çevirilemedi");
+            let lytho: String = record[3].parse().expect("numerik deger çevirilemedi");
 
-            let Lythology_coordinate = LythologyCoordinate::new(start, end, LYTHO);
-            let d_row = Lythology::new(drill_no, Lythology_coordinate);
+            let lythology_coordinate = LythologyCoordinate::new(start, end, lytho);
+            let d_row = Lythology::new(drill_no, lythology_coordinate);
 
-            Lythology_objects.push(d_row);
+            lythology_objects.push(d_row);
         }
-        Ok(Lythology_objects)
+        Ok(lythology_objects)
     }
 }
 
@@ -94,22 +112,17 @@ impl Lythology {
     }
 }
 
-impl Display for Lythology {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "drill no : {} \n\
-                   coordinate : {}", self.drill_no, self.coordinate)
-    }
-}
+
 
 #[derive(Debug)]
 struct LythologyCoordinate {
     start: f64,
     end: f64,
-    lytho: f64,
+    lytho: String,
 }
 
 impl LythologyCoordinate {
-    fn new(start: f64, end: f64, lytho: f64) -> LythologyCoordinate {
+    fn new(start: f64, end: f64, lytho: String) -> LythologyCoordinate {
         LythologyCoordinate {
             start,
             end,
@@ -126,30 +139,44 @@ impl Display for LythologyCoordinate {
     }
 }
 
+impl Display for Lythology {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "drill no : {} \n\
+                   coordinate : {}", self.drill_no, self.coordinate)
+    }
+}
+
+impl Display for LythologyObject {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "info : {} \n\
+                   data : {:?}", self.info, self.data)
+    }
+}
+
+impl Display for LythologyInformation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "path : {} \n\
+                   mining type : {} \n\
+                   seperator : {} \n\
+                   columns : {:?}", self.path, self.mining_type, self.seperator, self.columns)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::excels::lytho_reader::{LythologyColumns, LythologyInformation, LythologyObject};
     use std::collections::HashMap;
+    use lego_config::read::LegoConfig;
+
+    const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 
     #[test]
-    fn running_test() {
-        // path
-        let Lythology_csv_path = String::from(r"C:\Users\umut\CLionProjects\LegoRust\tests\data\excels4\hamorneklem.csv");
+    fn read_lythology_from_config() {
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
-        // columns
-        let mut columns: HashMap<LythologyColumns, String> = HashMap::new();
+        let lytho_info = LythologyInformation::new_from_config(&config_object);
+        let l_object = LythologyObject::new(lytho_info);
+        println!("lytology : {}", l_object);
 
-        columns.insert(LythologyColumns::DRILLNO, "SONDAJNO".to_string());
-        columns.insert(LythologyColumns::FROM, "FROM".to_string());
-        columns.insert(LythologyColumns::TO, "TO".to_string());
-        columns.insert(LythologyColumns::LYTHO, "LYTHO".to_string());
-
-        // data
-        let raw_sample_information = LythologyInformation::new(Lythology_csv_path,
-                                                               "Cu".to_string(), ";".to_string(), columns);
-        let raw_sample_objects = raw_sample_information.read().expect("Lythology file cannot be read and parsed !");
-        println!("Lythology rows : {:?}", raw_sample_objects);
-
-        let raw_sample_object = LythologyObject::new(raw_sample_information, raw_sample_objects);
     }
 }

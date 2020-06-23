@@ -1,0 +1,41 @@
+[excel_paths]
+slope_csv_path     = "/home/umut/CLionProjects/LegoRust/tests/data/excels4/egim.csv"
+lythology_csv_path = "/home/umut/CLionProjects/LegoRust/tests/data/excels4/litoloji.csv"
+rawsample_csv_path = "/home/umut/CLionProjects/LegoRust/tests/data/excels4/hamorneklem.csv"
+drill_csv_path     = "/home/umut/CLionProjects/LegoRust/tests/data/excels4/sondaj.csv"
+
+[str_paths]
+cross_section_path = "/home/umut/CLionProjects/LegoRust/tests/data/halkalar/cu_enkesit.str"
+composite_path =     "/home/umut/CLionProjects/LegoRust/tests/data/halkalar/cu_composite1.str"
+
+[mining_information]
+mining_type = "cu"
+drill_csv_seperator = ';'
+slope_csv_seperator = ';'
+lythology_csv_seperator = ';'
+rawsample_csv_seperator = ';'
+
+[drill_columns]  # all excel columns. Why should we seperate them?
+DRILLNO = "SONDAJNO"
+X = "X"
+Y = "Y"
+Z = "Z"
+DEPTH = "DERINLIK"
+
+[lythology_columns]
+DRILLNO = "SONDAJNO"
+FROM = "FROM"
+TO = "TO"
+lytho = "lytho"
+
+[rawsample_columns]
+DRILLNO = "SONDAJNO"
+FROM = "FROM"
+TO = "TO"
+PERCENT = "PERCENT"
+
+[slope_columns]
+DRILLNO = "SONDAJNO"
+DEPTH = "DERINLIK"
+DIP = "DALIM"
+AZIMUTH = "AZIMUTH"

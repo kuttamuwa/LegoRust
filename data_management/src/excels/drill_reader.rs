@@ -6,7 +6,7 @@ use std::hash::Hash;
 use std::string::ToString;
 
 use csv::{Reader, StringRecord};
-use lego_config::read::LConfig;
+use lego_config::read::{LegoConfig, DataManagementObjects};
 
 pub struct DrillObject {
     info: DrillInformation,
@@ -27,13 +27,13 @@ impl DrillObject {
 struct DrillInformation {
     path: String,
     mining_type: String,
-    seperator: String,
-    columns: HashMap<DrillColumns, String>,
+    seperator: char,
+    columns: HashMap<String, String>,  // todo sonra hallederim
 }
 
 impl DrillInformation {
-    fn new(path: String, mining_type: String, seperator: String,
-           columns: HashMap<DrillColumns, String>) -> DrillInformation {
+    fn new(path: String, mining_type: String, seperator: char,
+           columns: HashMap<String, String>) -> DrillInformation {
         DrillInformation {
             path,
             mining_type,
@@ -75,8 +75,19 @@ impl DrillInformation {
         Ok(drill_objects)
     }
 
-    fn read_from_config(config: LConfig) {
-        config.create_and_get_str_object()
+    fn new_from_config(config: &LegoConfig) -> DrillInformation {
+        // getting mining information
+        let path = config.get_drill_csv_path();
+        let mining_type = config.get_mining_type();
+        let seperator = config.get_x_csv_seperator("drill_csv_path");
+        let columns = config.get_x_columns("drill_columns");
+
+        DrillInformation {
+            path,
+            mining_type,
+            seperator,
+            columns
+        }
     }
 }
 
@@ -101,13 +112,6 @@ impl Drill {
             drill_no,
             coordinate,
         }
-    }
-}
-
-impl Display for Drill {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "drill no : {} \n\
-                   coordinate : {}", self.drill_no, self.coordinate)
     }
 }
 
@@ -138,10 +142,36 @@ impl Display for DrillCoordinate {
     }
 }
 
+impl Display for DrillInformation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "path : {} \n\
+                   mining type : {} \n\
+                   seperator : {} \n\
+                   columns: {:?}", self.path, self.mining_type, self.seperator, self.columns)
+    }
+}
+
+impl Display for DrillObject {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "Information : {} \n\
+                   Drills : {:?}", self.info, self.data)
+    }
+}
+
+impl Display for Drill {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "drill no : {} \n\
+                   coordinate : {}", self.drill_no, self.coordinate)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::excels::drill_reader::{DrillColumns, DrillInformation, DrillObject};
     use std::collections::HashMap;
+    use lego_config::read::{LegoConfig, DataManagementObjects};
+
+    const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 
     #[test]
     fn creating_drill_object() {
@@ -149,20 +179,31 @@ mod tests {
         let drill_csv_path = String::from(r"/home/umut/CLionProjects/LegoRust/tests/data/excels4/sondaj.csv");
 
         // columns
-        let mut columns: HashMap<DrillColumns, String> = HashMap::new();
+        let mut columns: HashMap<String, String> = HashMap::new();
 
-        columns.insert(DrillColumns::DRILLNO, "SONDAJNO".to_string());
-        columns.insert(DrillColumns::X, "X".to_string());
-        columns.insert(DrillColumns::Y, "Y".to_string());
-        columns.insert(DrillColumns::Z, "Z".to_string());
-        columns.insert(DrillColumns::DEPTH, "DERINLIK".to_string());
+        columns.insert("DRILLNO".to_string(), "SONDAJNO".to_string());
+        columns.insert("X".to_string(), "X".to_string());
+        columns.insert("Y".to_string(), "Y".to_string());
+        columns.insert("Z".to_string(), "Z".to_string());
+        columns.insert("DEPTH".to_string(), "DERINLIK".to_string());
 
         // data
         let drill_information = DrillInformation::new(drill_csv_path,
-                                                      "Cu".to_string(), ";".to_string(), columns);
+                                                      "Cu".to_string(), ';', columns);
 
         let drill_object = DrillObject::new(drill_information);
 
         println!("Drill object : {}", drill_object);
+    }
+
+    #[test]
+    fn creating_drill_object_from_config() {
+        // config path
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let d_info = DrillInformation::new_from_config(&config_object);
+
+        let drill_object = DrillObject::new(d_info);
+        println!("drill object : {}", drill_object);
+
     }
 }

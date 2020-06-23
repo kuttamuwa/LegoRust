@@ -7,7 +7,7 @@ use std::fmt;
 use std::string::ToString;
 use lego_config::read::{LegoConfig, DataManagementObjects};
 
-struct LythologyObject {
+pub struct LythologyObject {
     info: LythologyInformation,
     data: Vec<Lythology>,
 }

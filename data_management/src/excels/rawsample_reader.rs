@@ -5,6 +5,7 @@ use std::hash::Hash;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::string::ToString;
+use lego_config::read::{LegoConfig, DataManagementObjects};
 
 struct RawSampleObject {
     info: RawSampleInformation,
@@ -12,7 +13,8 @@ struct RawSampleObject {
 }
 
 impl RawSampleObject {
-    fn new(info: RawSampleInformation, data: Vec<RawSample>) -> RawSampleObject {
+    fn new(info: RawSampleInformation) -> RawSampleObject {
+        let data = info.read().expect("Error occured while reading raw sample !");
         RawSampleObject {
             info,
             data,
@@ -23,13 +25,28 @@ impl RawSampleObject {
 struct RawSampleInformation {
     path: String,
     mining_type: String,
-    seperator: String,
-    columns: HashMap<RawSampleColumns, String>,
+    seperator: char,
+    columns: HashMap<String, String>,  // we'l change here
 }
 
 impl RawSampleInformation {
-    fn new(path: String, mining_type: String, seperator: String,
-           columns: HashMap<RawSampleColumns, String>) -> RawSampleInformation {
+    fn new(path: String, mining_type: String, seperator: char,
+           columns: HashMap<String, String>) -> RawSampleInformation {
+        RawSampleInformation {
+            path,
+            mining_type,
+            seperator,
+            columns,
+        }
+    }
+
+    fn new_from_config(config: &LegoConfig) -> RawSampleInformation {
+        // getting mining information
+        let path = config.get_rawsample_csv_path();
+        let mining_type = config.get_mining_type();
+        let seperator = config.get_x_csv_seperator("rawsample_csv_path");
+        let columns = config.get_x_columns("rawsample_columns");
+
         RawSampleInformation {
             path,
             mining_type,
@@ -40,10 +57,10 @@ impl RawSampleInformation {
 
     fn read(&self) -> Result<Vec<RawSample>, Box<dyn Error>> {
         // our data
-        let mut RawSample_objects: Vec<RawSample> = vec![];
+        let mut raw_sample_objects: Vec<RawSample> = vec![];
 
-        let RawSample_csv_path: &String = &self.path;
-        let mut reader = Reader::from_path(RawSample_csv_path)?;
+        let raw_sample_csv_path: &String = &self.path;
+        let mut reader = Reader::from_path(raw_sample_csv_path)?;
 
         // columns
         reader.set_headers(StringRecord::from(vec!["SONDAJNO", "FROM", "TO", "PERCENT"]));
@@ -65,9 +82,9 @@ impl RawSampleInformation {
             let rawsample_coordinate = RawSampleCoordinate::new(start, end, percent);
             let d_row = RawSample::new(drill_no, rawsample_coordinate);
 
-            RawSample_objects.push(d_row);
+            raw_sample_objects.push(d_row);
         }
-        Ok(RawSample_objects)
+        Ok(raw_sample_objects)
     }
 }
 
@@ -91,13 +108,6 @@ impl RawSample {
             drill_no,
             coordinate,
         }
-    }
-}
-
-impl Display for RawSample {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "drill no : {} \n\
-                   coordinate : {}", self.drill_no, self.coordinate)
     }
 }
 
@@ -126,30 +136,49 @@ impl Display for RawSampleCoordinate {
     }
 }
 
+impl Display for RawSample {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "drill no : {} \n\
+                   coordinate : {}", self.drill_no, self.coordinate)
+    }
+}
+
+impl Display for RawSampleInformation {
+    /*
+    path: String,
+    mining_type: String,
+    seperator: char,
+    columns: HashMap<String, String>,
+    */
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "path : {} \n\
+                   mining type : {} \n\
+                   seperator : {} \n\
+                   columns : {:?}", self.path, self.mining_type, self.seperator, self.columns)
+    }
+}
+
+impl Display for RawSampleObject {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "info: {} \n\
+                   data : {:?}", self.info, self.data)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::excels::rawsample_reader::{RawSampleColumns, RawSampleInformation, RawSampleObject};
     use std::collections::HashMap;
+    use lego_config::read::LegoConfig;
+
+    const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 
     #[test]
-    fn running_test() {
-        // path
-        let RawSample_csv_path = String::from(r"C:\Users\umut\CLionProjects\LegoRust\tests\data\excels4\hamorneklem.csv");
+    fn read_rawsample_from_config() {
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
-        // columns
-        let mut columns: HashMap<RawSampleColumns, String> = HashMap::new();
-
-        columns.insert(RawSampleColumns::DRILLNO, "SONDAJNO".to_string());
-        columns.insert(RawSampleColumns::FROM, "FROM".to_string());
-        columns.insert(RawSampleColumns::TO, "TO".to_string());
-        columns.insert(RawSampleColumns::PERCENT, "PERCENT".to_string());
-
-        // data
-        let raw_sample_information = RawSampleInformation::new(RawSample_csv_path,
-                                                               "Cu".to_string(), ";".to_string(), columns);
-        let raw_sample_objects = raw_sample_information.read().expect("RawSample file cannot be read and parsed !");
-        println!("RawSample rows : {:?}", raw_sample_objects);
-
-        let raw_sample_object = RawSampleObject::new(raw_sample_information, raw_sample_objects);
+        let rawsample_info = RawSampleInformation::new_from_config(&config_object);
+        let l_object = RawSampleObject::new(rawsample_info);
+        println!("lytology : {}", l_object);
     }
 }

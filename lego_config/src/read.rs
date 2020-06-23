@@ -80,6 +80,14 @@ pub trait DataManagementObjects {
         rawsample_csv_path
     }
 
+    fn get_composite_str_path(&self) -> String {
+        let str_section = self.get_str_paths();
+        let composite_str_path = str_section.get("composite_str_path")
+            .expect("Composite path cannot be found !").kind.to_string();
+
+        composite_str_path
+    }
+
     fn get_slope_csv_path(&self) -> String {
         let excel_section = self.get_excel_paths();
         let slope_csv_path = excel_section.get("slope_csv_path")

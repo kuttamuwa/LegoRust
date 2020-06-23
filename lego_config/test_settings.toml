@@ -5,8 +5,8 @@ rawsample_csv_path = "/home/umut/CLionProjects/LegoRust/tests/data/excels4/hamor
 drill_csv_path     = "/home/umut/CLionProjects/LegoRust/tests/data/excels4/sondaj.csv"
 
 [str_paths]
-cross_section_path = "/home/umut/CLionProjects/LegoRust/tests/data/halkalar/cu_enkesit.str"
-composite_path =     "/home/umut/CLionProjects/LegoRust/tests/data/halkalar/cu_composite1.str"
+cross_section_str_path = "/home/umut/CLionProjects/LegoRust/tests/data/halkalar/cu_enkesit.str"
+composite_str_path =     "/home/umut/CLionProjects/LegoRust/tests/data/halkalar/cu_composite1.str"
 
 [mining_information]
 mining_type = "cu"
@@ -14,6 +14,8 @@ drill_csv_seperator = ';'
 slope_csv_seperator = ';'
 lythology_csv_seperator = ';'
 rawsample_csv_seperator = ';'
+composite_str_seperator = ','
+cross_section_str_seperator = ','
 
 [drill_columns]  # all excel columns. Why should we seperate them?
 DRILLNO = "SONDAJNO"

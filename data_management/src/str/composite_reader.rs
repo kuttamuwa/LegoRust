@@ -1,12 +1,11 @@
-use std::collections::HashMap;
 use std::error::Error;
-use csv::{Reader, StringRecord, ErrorKind};
-use std::hash::Hash;
 use std::fmt::{Display, Formatter};
-use std::{fmt, fs};
-use std::string::ToString;
+use std::fmt;
 use std::fs::File;
-use std::io::{BufReader, BufRead};
+use std::io::{BufRead, BufReader};
+use std::string::ToString;
+
+use lego_config::read::{DataManagementObjects, LegoConfig};
 
 struct CompositeObject {
     info: CompositeInformation,
@@ -14,7 +13,10 @@ struct CompositeObject {
 }
 
 impl CompositeObject {
-    fn new(info: CompositeInformation, data: Vec<Composite>) -> CompositeObject {
+    fn new(info: CompositeInformation) -> CompositeObject {
+        let data = info.read().expect(
+            "Error occurs while reading composite !"
+        );
         CompositeObject {
             info,
             data,
@@ -25,11 +27,11 @@ impl CompositeObject {
 struct CompositeInformation {
     path: String,
     mining_type: String,
-    seperator: String,
+    seperator: char,
 }
 
 impl CompositeInformation {
-    fn new(path: String, mining_type: String, seperator: String) -> CompositeInformation {
+    fn new(path: String, mining_type: String, seperator: char) -> CompositeInformation {
         CompositeInformation {
             path,
             mining_type,
@@ -37,6 +39,18 @@ impl CompositeInformation {
         }
     }
 
+    fn new_from_config(config: &LegoConfig) -> CompositeInformation {
+        // getting mining information
+        let path = config.get_composite_str_path();
+        let mining_type = config.get_mining_type();
+        let seperator = config.get_x_csv_seperator("rawsample_csv_path");
+
+        CompositeInformation {
+            path,
+            mining_type,
+            seperator,
+        }
+    }
     fn read(&self) -> Result<Vec<Composite>, Box<dyn Error>> {
         // our data
         let mut composite_objects: Vec<Composite> = vec![];
@@ -69,7 +83,7 @@ impl CompositeInformation {
 
                 let coord = CompositeCoordinate::new(x, y, z);
                 let composite = Composite::new(regular_no, tenor, drill_no,
-                cut_from, cut_end, cut_taken, coord);
+                                               cut_from, cut_end, cut_taken, coord);
 
                 composite_objects.push(composite);
             }
@@ -92,7 +106,7 @@ struct Composite {
 
 impl Composite {
     fn new(composite_no: i32, tenor: f64, drill_no: String, cut_from: f64, cut_end: f64,
-           cut_taken: f64,coordinate: CompositeCoordinate) -> Composite {
+           cut_taken: f64, coordinate: CompositeCoordinate) -> Composite {
         Composite {
             group_no: composite_no,
             tenor,
@@ -107,8 +121,47 @@ impl Composite {
 
 impl Display for Composite {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "group no : {} \n\
-                   coordinate : {}", self.group_no, self.coordinate)
+        /*
+         group_no: i32,
+    tenor: f64,
+    drill_no: String,
+    cut_from: f64,
+    cut_end: f64,
+    cut_taken: f64,
+    coordinate: CompositeCoordinate,
+    */
+
+        write!(f, "group no: {} \n\
+                   tenor : {} \n\
+                   drill no : {} \n\
+                   cut from : {} \n\
+                   cut end : {} \n\
+                   cut taken : {} \n\
+                   coordinate : {}", self.group_no, self.tenor, self.drill_no, self.cut_from,
+               self.cut_end, self.cut_taken, self.coordinate)
+    }
+}
+
+impl Display for CompositeInformation {
+    /*
+    path: String,
+    mining_type: String,
+    seperator: String,
+    */
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "path: {} \n\
+                   mining type : {} \n\
+                   seperator : {}", self.path, self.mining_type, self.seperator)
+    }
+}
+
+impl Display for CompositeObject {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        //     info: CompositeInformation,
+        //     data: Vec<Composite>,
+
+        write!(f, "info: {} \n\
+                   data : {:?}", self.info, self.data)
     }
 }
 
@@ -128,11 +181,6 @@ impl CompositeCoordinate {
         }
     }
 }
-// let tenor: f64 = record[4].parse().expect("tenor orani için numerik deger çevirilemedi");
-//                 let drill_no: String = record[5].parse().expect("drill no için text değer çevirilemedi");
-//                 let cut_from: f64 = record[6].parse().expect("kesim başlangıç değeri numeriğe çevirilemedi");
-//                 let cut_end: f64 = record[7].parse().expect("Kesim bitiş değeri numerik değere çevirilemedi");
-//                 let cut_taken: f64 = record[8].parse().expect("Son sütun olan kesim alım değeri numerik değere çevirilemedi");
 
 impl Display for CompositeCoordinate {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -142,15 +190,21 @@ impl Display for CompositeCoordinate {
     }
 }
 
-fn main() {
-    // path
-    let composite_csv_path = String::from(r"C:\Users\umut\CLionProjects\LegoRust\tests\data\halkalar\cu_composite1.str");
 
-    // data
-    let composite_information = CompositeInformation::new(composite_csv_path,
-                                                          "Cu".to_string(), ";".to_string());
-    let composites_data = composite_information.read().expect("Composite file cannot be read and parsed !");
-    println!("Composite rows : {:?}", composites_data);
+#[cfg(test)]
+mod tests {
+    use lego_config::read::LegoConfig;
 
-    let composite_object = CompositeObject::new(composite_information, composites_data);
+    use crate::str::composite_reader::{CompositeInformation, CompositeObject};
+
+    const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
+
+    #[test]
+    fn read_composite_from_config() {
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
+
+        let composite_info = CompositeInformation::new_from_config(&config_object);
+        let l_object = CompositeObject::new(composite_info);
+        println!("composite : {}", l_object);
+    }
 }

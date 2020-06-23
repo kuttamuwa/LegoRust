@@ -4,9 +4,9 @@ use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::hash::Hash;
 use std::string::ToString;
-use lego_config;
 
 use csv::{Reader, StringRecord};
+use lego_config::read::LConfig;
 
 pub struct DrillObject {
     info: DrillInformation,
@@ -14,7 +14,8 @@ pub struct DrillObject {
 }
 
 impl DrillObject {
-    fn new(info: DrillInformation, data: Vec<Drill>) -> DrillObject {
+    fn new(info: DrillInformation) -> DrillObject {
+        let data = info.read().unwrap();
         DrillObject {
             info,
             data,
@@ -72,6 +73,10 @@ impl DrillInformation {
             drill_objects.push(d_row);
         }
         Ok(drill_objects)
+    }
+
+    fn read_from_config(config: LConfig) {
+        config.create_and_get_str_object()
     }
 }
 
@@ -139,7 +144,7 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn running_test() {
+    fn creating_drill_object() {
         // path
         let drill_csv_path = String::from(r"/home/umut/CLionProjects/LegoRust/tests/data/excels4/sondaj.csv");
 
@@ -155,11 +160,9 @@ mod tests {
         // data
         let drill_information = DrillInformation::new(drill_csv_path,
                                                       "Cu".to_string(), ";".to_string(), columns);
-        let drill_vectors = drill_information.read().expect("Drill file cannot be read and parsed !");
-        println!("drill rows : {:?}", drill_vectors);
 
-        let drill_object = DrillObject::new(drill_information, drill_vectors);
+        let drill_object = DrillObject::new(drill_information);
 
-        // println!("Drill object : {}", drill_object);
+        println!("Drill object : {}", drill_object);
     }
 }

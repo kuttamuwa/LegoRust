@@ -7,3 +7,5 @@ drill_csv_path     = "tests/data/excels4/sondaj.csv"
 [str_paths]
 cross_section_path = "tests/data/halkalar/cu_enkesit.str"
 composite_path = "tests/data/halkalar/cu_composite1.str"
+
+[mining_information]

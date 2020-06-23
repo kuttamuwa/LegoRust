@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 data_management = {path = "../LegoRust/data_management"}
-lego_config = {path = "../LegoRust/lego_config"}
+#lego_config = {path = "../LegoRust/lego_config"}

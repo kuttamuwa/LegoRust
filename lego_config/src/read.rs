@@ -88,6 +88,14 @@ pub trait DataManagementObjects {
         composite_str_path
     }
 
+    fn get_cross_section_str_path(&self) -> String {
+        let str_section = self.get_str_paths();
+        let cross_section_str_path = str_section.get("cross_section_str_path")
+            .expect("Cross section path cannot be found !").kind.to_string();
+
+        cross_section_str_path
+
+    }
     fn get_slope_csv_path(&self) -> String {
         let excel_section = self.get_excel_paths();
         let slope_csv_path = excel_section.get("slope_csv_path")
@@ -116,10 +124,10 @@ pub trait DataManagementObjects {
         mining_type
     }
 
-    fn get_x_csv_seperator(&self, excel_name: &str) -> char {
+    fn get_x_seperator(&self, data_name: &str) -> char {
         // default is ;
         let m_section = &self.get_mining_information();
-        let csv_seperator = m_section.get(excel_name);
+        let csv_seperator = m_section.get(data_name);
 
         match csv_seperator {
             Some(t) => {
@@ -129,6 +137,17 @@ pub trait DataManagementObjects {
             },  // length cannot be more than 1 => char !
             None => ';'
         }
+    }
+
+    fn get_cross_section_seperator(&self) -> String {
+        // default is ;
+        let m_section = &self.get_mining_information();
+        let cross_seperator = m_section.get("cross_section_str_seperator")
+            .expect("Cross section seperator cannot be found !")
+            .kind
+            .to_string();
+
+        cross_seperator
     }
 
 

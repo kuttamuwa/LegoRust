@@ -79,7 +79,7 @@ impl DrillInformation {
         // getting mining information
         let path = config.get_drill_csv_path();
         let mining_type = config.get_mining_type();
-        let seperator = config.get_x_csv_seperator("drill_csv_path");
+        let seperator = config.get_x_seperator("drill_csv_seperator");
         let columns = config.get_x_columns("drill_columns");
 
         DrillInformation {

@@ -45,7 +45,7 @@ impl LythologyInformation {
         // getting mining information
         let path = config.get_lythology_csv_path();
         let mining_type = config.get_mining_type();
-        let seperator = config.get_x_csv_seperator("lythology_csv_path");
+        let seperator = config.get_x_seperator("lythology_csv_seperator");
         let columns = config.get_x_columns("lythology_columns");
 
         LythologyInformation {

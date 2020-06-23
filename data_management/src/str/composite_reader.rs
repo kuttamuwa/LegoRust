@@ -43,7 +43,7 @@ impl CompositeInformation {
         // getting mining information
         let path = config.get_composite_str_path();
         let mining_type = config.get_mining_type();
-        let seperator = config.get_x_csv_seperator("rawsample_csv_path");
+        let seperator = config.get_x_seperator("composite_str_seperator");
 
         CompositeInformation {
             path,

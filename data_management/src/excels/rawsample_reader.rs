@@ -44,7 +44,7 @@ impl RawSampleInformation {
         // getting mining information
         let path = config.get_rawsample_csv_path();
         let mining_type = config.get_mining_type();
-        let seperator = config.get_x_csv_seperator("rawsample_csv_path");
+        let seperator = config.get_x_seperator("rawsample_csv_seperator");
         let columns = config.get_x_columns("rawsample_columns");
 
         RawSampleInformation {

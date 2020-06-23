@@ -15,7 +15,7 @@ slope_csv_seperator = ';'
 lythology_csv_seperator = ';'
 rawsample_csv_seperator = ';'
 composite_str_seperator = ','
-cross_section_str_seperator = ','
+cross_section_str_seperator = "0, 0.000, 0.000, 0.000,"
 
 [drill_columns]  # all excel columns. Why should we seperate them?
 DRILLNO = "SONDAJNO"

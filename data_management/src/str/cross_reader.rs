@@ -4,6 +4,10 @@ use std::io::{BufReader, BufRead};
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use lego_config::read::{LegoConfig, DataManagementObjects};
+use std::collections::HashSet;
+use std::borrow::BorrowMut;
+use std::ptr::eq;
+use std::borrow::Cow::Borrowed;
 
 #[derive(Debug)]
 pub struct CrossObject {
@@ -13,20 +17,32 @@ pub struct CrossObject {
 
 impl CrossObject {
     fn new(info: CrossInformation) -> CrossObject {
-        let data = info.read()
+        let mut data = info.read()
             .expect("Error occured while reading cross section ");
+
+        CrossObject::order_data(&mut data);
+
         CrossObject {
             info,
             data,
         }
     }
+
+    fn order_data(crosses: &mut Vec<Cross>) {
+        // sorting by z
+
+        crosses.sort_by(|c1, c2|
+            c1.coordinate.z_coord.partial_cmp(&c2.coordinate.z_coord).unwrap());
+    }
+
 }
 
 #[derive(Debug)]
 struct CrossInformation {
     path: String,
     mining_type: String,
-    seperator: String
+    seperator: String,
+    duplicate_avoiding: bool
 }
 
 impl CrossInformation {
@@ -34,7 +50,8 @@ impl CrossInformation {
         CrossInformation {
             path,
             mining_type,
-            seperator
+            seperator,
+            duplicate_avoiding: true
         }
     }
 
@@ -44,11 +61,7 @@ impl CrossInformation {
         let mining_type = config.get_mining_type();
         let seperator = config.get_cross_section_seperator();
 
-        CrossInformation {
-            path,
-            mining_type,
-            seperator,
-        }
+        CrossInformation::new(path, mining_type, seperator)
     }
 
     fn read(&self) -> Result<Vec<Cross>, Box<dyn Error>> {
@@ -71,9 +84,6 @@ impl CrossInformation {
             let record = line.expect("Failed to reading line of str file");
 
             if record.contains(&self.seperator) {
-                // todo: seperator doğru ayırmıyor.
-
-                println!("seperator included");
                 group_no += 1;
 
             } else {
@@ -87,7 +97,10 @@ impl CrossInformation {
                 let coord = CrossCoordinate::new(x, y, z);
                 let cross = Cross::new(group_no, coord);
 
-                cross_objects.push(cross);
+                if cross_objects.contains(&cross) == false && self.duplicate_avoiding {
+                    // avoiding duplicates
+                    cross_objects.push(cross);
+                }
 
             }
 
@@ -98,7 +111,7 @@ impl CrossInformation {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Cross {
     group_no: i32,
     coordinate: CrossCoordinate,
@@ -113,7 +126,7 @@ impl Cross {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct CrossCoordinate {
     x_coord: f64,
     y_coord: f64,
@@ -126,6 +139,15 @@ impl CrossCoordinate {
             x_coord: x,
             y_coord: y,
             z_coord: z
+        }
+    }
+
+    pub fn eq_test(&self, coordinate: &CrossCoordinate) -> bool {
+        if (self.x_coord == coordinate.x_coord) && (self.y_coord == coordinate.y_coord) &&
+            (self.z_coord == coordinate.z_coord) {
+           true
+        } else {
+            false
         }
     }
 }
@@ -187,5 +209,23 @@ mod tests {
         }
         // println!("cross sections data : {:?}", &cross_object.data);
         println!("count of sections : {:?}", &cross_object.data.len());
+    }
+
+    #[test]
+    fn order_crosses_by_z() {
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
+
+        let cross_info = CrossInformation::new_from_config(&config_object);
+        let cross_object = CrossObject::new(cross_info);
+
+        for i in 1..cross_object.data.len() {
+            let c1 = &cross_object.data[i];
+            let c2 = &cross_object.data[i - 1];
+
+            println!("before z: {}", c1.coordinate.z_coord);
+            println!("now z: {}", c2.coordinate.z_coord);
+
+            assert!(c1.coordinate.z_coord >= c2.coordinate.z_coord);
+        }
     }
 }

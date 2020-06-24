@@ -23,7 +23,7 @@ pub mod str {
 
     pub mod composite_reader;
 
-    pub mod cross_management_traits;
+    pub mod dat_management_traits;
 }
 
 pub mod lego_tests {
@@ -32,32 +32,33 @@ pub mod lego_tests {
     use crate::excels::lytho_reader::{LythologyObject, LythologyInformation};
     use crate::excels::rawsample_reader::{RawSampleObject, RawSampleInformation};
     use crate::excels::slope_reader::{SlopeObject, SlopeInformation};
+    use crate::str::cross_reader::{CrossObject, CrossInformation};
+    use crate::str::composite_reader::{CompositeObject, CompositeInformation};
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
-    // const LEGOCONFIG: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
     pub fn give_me_test_drill () -> DrillObject {
-        let LEGOCONFIG: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
-        let d_info = DrillInformation::new_from_config(&LEGOCONFIG);
+        let d_info = DrillInformation::new_from_config(&legoconfig);
 
         let drill_object = DrillObject::new(d_info);
         drill_object
     }
 
     pub fn give_me_test_lytho () -> LythologyObject {
-        let LEGOCONFIG: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
-        let lytho_info = LythologyInformation::new_from_config(&LEGOCONFIG);
+        let lytho_info = LythologyInformation::new_from_config(&legoconfig);
         let l_object = LythologyObject::new(lytho_info);
 
         l_object
     }
 
     pub fn give_me_test_rawsample () -> RawSampleObject {
-        let LEGOCONFIG: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
-        let rawsample_info = RawSampleInformation::new_from_config(&LEGOCONFIG);
+        let rawsample_info = RawSampleInformation::new_from_config(&legoconfig);
         let r_object = RawSampleObject::new(rawsample_info);
 
         r_object
@@ -65,12 +66,29 @@ pub mod lego_tests {
     }
 
     pub fn give_me_slope () -> SlopeObject {
-        let LEGOCONFIG: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
-        let slope_info = SlopeInformation::new_from_config(&LEGOCONFIG);
+        let slope_info = SlopeInformation::new_from_config(&legoconfig);
         let s_object = SlopeObject::new(slope_info);
 
         s_object
+    }
+
+    pub fn give_me_cross () -> CrossObject {
+        let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
+
+        let cross_info = CrossInformation::new_from_config(&legoconfig);
+        let cross_object = CrossObject::new(cross_info);
+
+        cross_object
+    }
+
+    pub fn give_me_composite () -> CompositeObject {
+        let composite_info = CompositeInformation::new_from_config(&config_object);
+        let l_object = CompositeObject::new(composite_info);
+
+        l_object
+
     }
 }
 

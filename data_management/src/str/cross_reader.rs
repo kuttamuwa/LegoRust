@@ -13,7 +13,7 @@ pub struct CrossObject {
 }
 
 impl CrossObject {
-    fn new(info: CrossInformation) -> CrossObject {
+    pub(crate) fn new(info: CrossInformation) -> CrossObject {
         let mut data = info.read()
             .expect("Error occured while reading cross section ");
 
@@ -88,7 +88,7 @@ impl CrossObject {
 }
 
 #[derive(Debug)]
-struct CrossInformation {
+pub struct CrossInformation {
     path: String,
     mining_type: String,
     seperator: String,
@@ -105,7 +105,7 @@ impl CrossInformation {
         }
     }
 
-    fn new_from_config(config: &LegoConfig) -> CrossInformation {
+    pub(crate) fn new_from_config(config: &LegoConfig) -> CrossInformation {
         // getting mining information
         let path = config.get_cross_section_str_path();
         let mining_type = config.get_mining_type();

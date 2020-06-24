@@ -7,13 +7,13 @@ use std::string::ToString;
 
 use lego_config::read::{DataManagementObjects, LegoConfig};
 
-struct CompositeObject {
+pub struct CompositeObject {
     info: CompositeInformation,
     data: Vec<Composite>,
 }
 
 impl CompositeObject {
-    fn new(info: CompositeInformation) -> CompositeObject {
+    pub(crate) fn new(info: CompositeInformation) -> CompositeObject {
         let data = info.read().expect(
             "Error occurs while reading composite !"
         );
@@ -24,7 +24,7 @@ impl CompositeObject {
     }
 }
 
-struct CompositeInformation {
+pub struct CompositeInformation {
     path: String,
     mining_type: String,
     seperator: char,
@@ -39,7 +39,7 @@ impl CompositeInformation {
         }
     }
 
-    fn new_from_config(config: &LegoConfig) -> CompositeInformation {
+    pub(crate) fn new_from_config(config: &LegoConfig) -> CompositeInformation {
         // getting mining information
         let path = config.get_composite_str_path();
         let mining_type = config.get_mining_type();

@@ -7,13 +7,13 @@ use std::fmt;
 use std::string::ToString;
 use lego_config::read::{LegoConfig, DataManagementObjects};
 
-struct RawSampleObject {
+pub struct RawSampleObject {
     info: RawSampleInformation,
     data: Vec<RawSample>,
 }
 
 impl RawSampleObject {
-    fn new(info: RawSampleInformation) -> RawSampleObject {
+    pub(crate) fn new(info: RawSampleInformation) -> RawSampleObject {
         let data = info.read().expect("Error occured while reading raw sample !");
         RawSampleObject {
             info,
@@ -22,7 +22,7 @@ impl RawSampleObject {
     }
 }
 
-struct RawSampleInformation {
+pub struct RawSampleInformation {
     path: String,
     mining_type: String,
     seperator: char,
@@ -40,7 +40,7 @@ impl RawSampleInformation {
         }
     }
 
-    fn new_from_config(config: &LegoConfig) -> RawSampleInformation {
+    pub(crate) fn new_from_config(config: &LegoConfig) -> RawSampleInformation {
         // getting mining information
         let path = config.get_rawsample_csv_path();
         let mining_type = config.get_mining_type();

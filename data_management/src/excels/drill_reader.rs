@@ -14,7 +14,7 @@ pub struct DrillObject {
 }
 
 impl DrillObject {
-    fn new(info: DrillInformation) -> DrillObject {
+    pub(crate) fn new(info: DrillInformation) -> DrillObject {
         let data = info.read().unwrap();
         DrillObject {
             info,
@@ -24,7 +24,7 @@ impl DrillObject {
 }
 
 
-struct DrillInformation {
+pub struct DrillInformation {
     path: String,
     mining_type: String,
     seperator: char,
@@ -75,7 +75,7 @@ impl DrillInformation {
         Ok(drill_objects)
     }
 
-    fn new_from_config(config: &LegoConfig) -> DrillInformation {
+    pub(crate) fn new_from_config(config: &LegoConfig) -> DrillInformation {
         // getting mining information
         let path = config.get_drill_csv_path();
         let mining_type = config.get_mining_type();

@@ -5,14 +5,17 @@ use std::hash::Hash;
 use std::fmt::{Display, Formatter};
 use std::fmt;
 use std::string::ToString;
+use lego_config::read::{LegoConfig, DataManagementObjects};
 
-struct SlopeObject {
+#[derive(Debug)]
+pub struct SlopeObject {
     info: SlopeInformation,
     data: Vec<Slope>,
 }
 
 impl SlopeObject {
-    fn new(info: SlopeInformation, data: Vec<Slope>) -> SlopeObject {
+    pub(crate) fn new(info: SlopeInformation) -> SlopeObject {
+        let data = info.read().expect("Something went wrong while reading slope csv !");
         SlopeObject {
             info,
             data,
@@ -20,16 +23,17 @@ impl SlopeObject {
     }
 }
 
-struct SlopeInformation {
+#[derive(Debug)]
+pub struct SlopeInformation {
     path: String,
     mining_type: String,
-    seperator: String,
-    columns: HashMap<SlopeColumns, String>,
+    seperator: char,
+    columns: HashMap<String, String>,  // we'll fix this later
 }
 
 impl SlopeInformation {
-    fn new(path: String, mining_type: String, seperator: String,
-           columns: HashMap<SlopeColumns, String>) -> SlopeInformation {
+    fn new(path: String, mining_type: String, seperator: char,
+           columns: HashMap<String, String>) -> SlopeInformation {
         SlopeInformation {
             path,
             mining_type,
@@ -38,12 +42,25 @@ impl SlopeInformation {
         }
     }
 
+    pub(crate) fn new_from_config(config: &LegoConfig) -> SlopeInformation {
+        let path = config.get_slope_csv_path();
+        let mining_type = config.get_mining_type();
+        let seperator = config.get_x_seperator("slope_csv_seperator");
+        let columns = config.get_x_columns("slope_columns");
+
+        SlopeInformation {
+            path,
+            mining_type,
+            seperator,
+            columns
+        }
+    }
     fn read(&self) -> Result<Vec<Slope>, Box<dyn Error>> {
         // our data
-        let mut Slope_objects: Vec<Slope> = vec![];
+        let mut slope_objects: Vec<Slope> = vec![];
 
-        let Slope_csv_path: &String = &self.path;
-        let mut reader = Reader::from_path(Slope_csv_path)?;
+        let slope_csv_path: &String = &self.path;
+        let mut reader = Reader::from_path(slope_csv_path)?;
 
         // columns
         reader.set_headers(StringRecord::from(vec!["SONDAJNO", "DERINLIK", "DALIM", "AZIMUTH"]));
@@ -66,9 +83,9 @@ impl SlopeInformation {
             let slope_coordinate = DrillSlopeInfo::new(depth, dip as i32, azimuth as i32);
             let d_row = Slope::new(drill_no, slope_coordinate);
 
-            Slope_objects.push(d_row);
+            slope_objects.push(d_row);
         }
-        Ok(Slope_objects)
+        Ok(slope_objects)
     }
 }
 
@@ -131,26 +148,16 @@ impl Display for Slope {
 mod tests {
     use std::collections::HashMap;
     use crate::excels::slope_reader::{SlopeColumns, SlopeInformation, SlopeObject};
+    use lego_config::read::LegoConfig;
+
+    const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 
     #[test]
-    fn running_test() {
-        // path
-        let slope_csv_path = String::from(r"C:\Users\umut\CLionProjects\LegoRust\tests\data\excels4\hamorneklem.csv");
+    fn read_slope_from_config () {
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let slope_info = SlopeInformation::new_from_config(&config_object);
 
-        // columns
-        let mut columns: HashMap<SlopeColumns, String> = HashMap::new();
-
-        columns.insert(SlopeColumns::DRILLNO, "SONDAJNO".to_string());
-        columns.insert(SlopeColumns::DEPTH, "DEPTH".to_string());
-        columns.insert(SlopeColumns::DIP, "DIP".to_string());
-        columns.insert(SlopeColumns::AZIMUTH, "AZIMUTH".to_string());
-
-        // data
-        let raw_sample_information = SlopeInformation::new(slope_csv_path,
-                                                           "Cu".to_string(), ";".to_string(), columns);
-        let raw_sample_objects = raw_sample_information.read().expect("Slope file cannot be read and parsed !");
-        println!("Slope rows : {:?}", raw_sample_objects);
-
-        let raw_sample_object = SlopeObject::new(raw_sample_information, raw_sample_objects);
+        let s_object = SlopeObject::new(slope_info);
+        println!("slope object : {:?}", s_object);
     }
 }

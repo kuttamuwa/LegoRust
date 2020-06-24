@@ -13,7 +13,7 @@ pub struct LythologyObject {
 }
 
 impl LythologyObject {
-    fn new(info: LythologyInformation) -> LythologyObject {
+    pub(crate) fn new(info: LythologyInformation) -> LythologyObject {
         let data = info.read().expect("Lythology excel okunurken bir hata oluştu !");
 
         LythologyObject {
@@ -23,7 +23,7 @@ impl LythologyObject {
     }
 }
 
-struct LythologyInformation {
+pub struct LythologyInformation {
     path: String,
     mining_type: String,
     seperator: char,
@@ -41,7 +41,7 @@ impl LythologyInformation {
         }
     }
 
-    fn new_from_config(config: &LegoConfig) -> LythologyInformation {
+    pub(crate) fn new_from_config(config: &LegoConfig) -> LythologyInformation {
         // getting mining information
         let path = config.get_lythology_csv_path();
         let mining_type = config.get_mining_type();

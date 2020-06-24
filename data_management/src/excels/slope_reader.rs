@@ -89,6 +89,7 @@ impl SlopeInformation {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, PartialEq, Eq, Hash)]
 enum SlopeColumns {
     DRILLNO,
@@ -146,8 +147,7 @@ impl Display for Slope {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use crate::excels::slope_reader::{SlopeColumns, SlopeInformation, SlopeObject};
+    use crate::excels::slope_reader::{SlopeInformation, SlopeObject};
     use lego_config::read::LegoConfig;
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";

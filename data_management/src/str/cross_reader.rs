@@ -172,7 +172,7 @@ struct Extent {
 }
 
 #[derive(Debug, PartialEq)]
-struct Cross {
+pub struct Cross {
     group_no: i32,
     coordinate: CrossCoordinate,
     cross_id: i32,
@@ -187,24 +187,51 @@ impl Cross {
         }
     }
 
-    fn find_model_frame(crosses: &Vec<Cross>) -> Extent
-    {
+    pub fn get_minimum_xs(crosses: &Vec<Cross>) -> f64 {
         let mut xs = Cross::give_all_xs(crosses);
-        xs.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
+        xs.first().unwrap().clone()
+    }
+
+    pub fn get_minimum_ys(crosses: &Vec<Cross>) -> f64 {
         let mut ys = Cross::give_all_ys(crosses);
-        ys.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
+        ys.first().unwrap().clone()
+    }
+
+    pub fn get_minimum_zs(crosses: &Vec<Cross>) -> f64 {
         let mut zs = Cross::give_all_zs(crosses);
-        zs.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        let min_x = xs.first().unwrap().clone();
-        let min_y = ys.first().unwrap().clone();
-        let min_z = zs.first().unwrap().clone();
+        zs.first().unwrap().clone()
+    }
 
-        let max_x= xs.last().unwrap().clone();
-        let max_y = ys.last().unwrap().clone();
-        let max_z = zs.last().unwrap().clone();
+    pub fn get_maximum_xs(crosses: &Vec<Cross>) -> f64 {
+        let mut xs = Cross::give_all_xs(crosses);
+
+        xs.last().unwrap().clone()
+    }
+
+    pub fn get_maximum_ys(crosses: &Vec<Cross>) -> f64 {
+        let mut zs = Cross::give_all_zs(crosses);
+
+        zs.last().unwrap().clone()
+    }
+
+    pub fn get_maximum_zs(crosses: &Vec<Cross>) -> f64 {
+        let mut zs = Cross::give_all_zs(crosses);
+
+        zs.last().unwrap().clone()
+    }
+
+    pub fn find_model_frame(crosses: &Vec<Cross>) -> Extent
+    {
+        let min_x = Cross::get_minimum_xs(crosses);
+        let min_y = Cross::get_minimum_ys(crosses);
+        let min_z = Cross::get_minimum_zs(crosses);
+
+        let max_x = Cross::get_maximum_xs(crosses);
+        let max_y = Cross::get_maximum_ys(crosses);
+        let max_z = Cross::get_maximum_zs(crosses);
 
         Extent {
             min_x,
@@ -218,7 +245,7 @@ impl Cross {
 
     }
 
-    fn find_two_cross_frame(&self, cross_two: &Cross) -> Extent {
+    pub fn find_two_cross_frame(&self, cross_two: &Cross) -> Extent {
         /*
         It is used to determine one rectangular frame consists two cross
 
@@ -274,6 +301,8 @@ impl Cross {
             v.push(i.coordinate.x_coord)
         }
 
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
         v
     }
 
@@ -283,14 +312,19 @@ impl Cross {
             v.push(i.coordinate.y_coord)
         }
 
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
         v
     }
 
     fn give_all_zs(crosses: &Vec<Cross>) -> Vec<f64> {
+        // sorting active
         let mut v: Vec<f64> = vec![];
         for i in crosses {
             v.push(i.coordinate.z_coord)
         }
+
+        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
         v
     }

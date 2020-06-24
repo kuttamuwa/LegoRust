@@ -89,6 +89,7 @@ impl LythologyInformation {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, PartialEq, Eq, Hash)]
 enum LythologyColumns {
     DRILLNO,
@@ -164,8 +165,7 @@ impl Display for LythologyInformation {
 
 #[cfg(test)]
 mod tests {
-    use crate::excels::lytho_reader::{LythologyColumns, LythologyInformation, LythologyObject};
-    use std::collections::HashMap;
+    use crate::excels::lytho_reader::{LythologyInformation, LythologyObject};
     use lego_config::read::LegoConfig;
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";

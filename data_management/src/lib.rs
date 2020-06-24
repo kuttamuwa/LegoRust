@@ -84,7 +84,9 @@ pub mod lego_tests {
     }
 
     pub fn give_me_composite () -> CompositeObject {
-        let composite_info = CompositeInformation::new_from_config(&config_object);
+        let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
+
+        let composite_info = CompositeInformation::new_from_config(&legoconfig);
         let l_object = CompositeObject::new(composite_info);
 
         l_object

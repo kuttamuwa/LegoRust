@@ -91,6 +91,7 @@ impl DrillInformation {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, PartialEq, Eq, Hash)]
 enum DrillColumns {
     DRILLNO,
@@ -167,34 +168,10 @@ impl Display for Drill {
 
 #[cfg(test)]
 mod tests {
-    use crate::excels::drill_reader::{DrillColumns, DrillInformation, DrillObject};
-    use std::collections::HashMap;
-    use lego_config::read::{LegoConfig, DataManagementObjects};
+    use crate::excels::drill_reader::{DrillInformation, DrillObject};
+    use lego_config::read::{LegoConfig};
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
-
-    #[test]
-    fn creating_drill_object() {
-        // path
-        let drill_csv_path = String::from(r"/home/umut/CLionProjects/LegoRust/tests/data/excels4/sondaj.csv");
-
-        // columns
-        let mut columns: HashMap<String, String> = HashMap::new();
-
-        columns.insert("DRILLNO".to_string(), "SONDAJNO".to_string());
-        columns.insert("X".to_string(), "X".to_string());
-        columns.insert("Y".to_string(), "Y".to_string());
-        columns.insert("Z".to_string(), "Z".to_string());
-        columns.insert("DEPTH".to_string(), "DERINLIK".to_string());
-
-        // data
-        let drill_information = DrillInformation::new(drill_csv_path,
-                                                      "Cu".to_string(), ';', columns);
-
-        let drill_object = DrillObject::new(drill_information);
-
-        println!("Drill object : {}", drill_object);
-    }
 
     #[test]
     fn creating_drill_object_from_config() {

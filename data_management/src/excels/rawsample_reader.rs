@@ -88,6 +88,7 @@ impl RawSampleInformation {
     }
 }
 
+#[allow(unused)]
 #[derive(Debug, PartialEq, Eq, Hash)]
 enum RawSampleColumns {
     DRILLNO,
@@ -167,8 +168,7 @@ impl Display for RawSampleObject {
 
 #[cfg(test)]
 mod tests {
-    use crate::excels::rawsample_reader::{RawSampleColumns, RawSampleInformation, RawSampleObject};
-    use std::collections::HashMap;
+    use crate::excels::rawsample_reader::{RawSampleInformation, RawSampleObject};
     use lego_config::read::LegoConfig;
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";

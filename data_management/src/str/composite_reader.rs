@@ -52,6 +52,8 @@ impl CompositeInformation {
         }
     }
     fn read(&self) -> Result<Vec<Composite>, Box<dyn Error>> {
+        // todo: tabaka kalınlığı ve düzenli grup karşılaştırması yapılacak. python'da yazmış pass demişiz.
+
         // our data
         let mut composite_objects: Vec<Composite> = vec![];
 

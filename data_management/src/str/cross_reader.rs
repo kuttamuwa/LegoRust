@@ -13,48 +13,96 @@ pub struct CrossObject {
 }
 
 impl CrossObject {
-    pub(crate) fn new(info: CrossInformation) -> CrossObject {
+    pub(crate) fn new(info: CrossInformation, min_drill_z: Option<f64>) -> CrossObject {
         let mut data = info.read()
             .expect("Error occured while reading cross section ");
 
-        // ordering data
-        CrossObject::order_data(&mut data);
-
-        // is there any duplicates?
-        let dups = CrossObject::take_duplicates(&data);
-        println!("dups : {:?}", dups);
-
-        // take minimum z drill
-        println!("min drill : {}", CrossObject::take_min_drill(&data));
-
-        // is there any data which z coordinate is deeper than min one?
-        CrossObject::delete_deeper_than_min_drill(&mut data);
-
-        let extent = Cross::find_model_frame(&data);
-        println!("extent : {:?}", extent);
-
-        for i in 0..data.len() {
-            println!("{}", &data[i]);
-        }
-
-        CrossObject {
+        // creating object. but we need to do some initial things.
+        let mut object = CrossObject {
             info,
             data,
+        };
+
+        // ordering data by Z axis - single thread context
+        object.sort_crosses_data(Axis::Z);
+
+        // is there any duplicates?
+        let dups = &object.take_duplicates();
+        println!("dups : {:?}", dups);
+
+        // are we going to remove crosses deeper than our drill ?
+        match min_drill_z {
+            Some(t) => {
+                // also setting this value means remove it.
+                // removing crosses has z coordinate are bigger than minimum z coordinate of drills
+                let wrong_cases = object.get_deeper_than_min_drill(&t);
+                println!("wrong cases : {:?}", wrong_cases);
+
+            }
+            None => println!("We will not remove crosses deeper than minimum drill value \
+            which is not specified ")
+        };
+
+        let extent = object.find_model_frame();
+        println!("extent : {:?}", extent);
+
+        // for i in 0..data.len() {
+        //     println!("{}", &data[i]);
+        // }
+        object
+
+    }
+
+    fn get_cross_by_groupno(&self, group_no: i32) -> Option<&Cross> {
+        let mut return_cross: Option<&Cross> = None;
+
+        for i in self.data.iter() {
+            if i.group_no == group_no {
+                return_cross = Some(i);
+            }
         }
+
+        return_cross
     }
 
-    fn order_data(crosses: &mut Vec<Cross>) {
-        // sorting by z
+    pub fn find_model_frame(&self) -> Extent
+    {
+        // IT HAD TO BE SORTED !
 
-        crosses.sort_by(|c1, c2|
-            c1.coordinate.z_coord.partial_cmp(&c2.coordinate.z_coord).unwrap());
+        let min_x = self.data.first().unwrap().give_minimum_x_value().clone();
+        let min_y = self.data.first().unwrap().give_minimum_y_value().clone();
+        let min_z = self.data.first().unwrap().give_minimum_z_value().clone();
+
+        let max_x = self.data.last().unwrap().give_maximum_x_value().clone();
+        let max_y = self.data.last().unwrap().give_maximum_y_value().clone();
+        let max_z = self.data.last().unwrap().give_maximum_z_value().clone();
+
+        Extent {
+            min_x,
+            min_y,
+            min_z,
+
+            max_x,
+            max_y,
+            max_z
+        }
+
     }
 
-    fn take_duplicates(crosses: &Vec<Cross>) -> Vec<&Cross> {
+    fn sort_crosses_data(&mut self, axis: Axis) {
+        self.data.sort_by(|c1, c2| {
+            let (c1_max_value, c2_max_value) = (c1.get_minimum_by_axis(&axis), c2.get_minimum_by_axis(&axis));
+
+            c1_max_value.partial_cmp(&c2_max_value).unwrap()
+        });
+
+    }
+
+    fn take_duplicates(&self) -> Vec<&Cross> {
         let mut duplicates: Vec<&Cross> = vec![];
 
-        for (_, c) in crosses.iter().enumerate() {
-            for k in crosses.iter() {
+        for (_, c) in self.data.iter().enumerate() {
+            for k in self.data.iter() {
                 if c == k {
                     duplicates.push(c);
                 }
@@ -64,26 +112,43 @@ impl CrossObject {
         duplicates
     }
 
-    fn take_min_drill(crosses: &Vec<Cross>) -> &Cross {
-        crosses.get(0).unwrap()
-    }
+    fn take_min_axis_coordinate_from_crosses(&self, axis: Axis) -> f64 {
+        // we dont have to accept that Vec<Cross> are already sort between each other
+        // according to any axis. We dont have to. Because we will iterate all of them and get
+        // minimum value
 
-    fn delete_deeper_than_min_drill(crosses: &mut Vec<Cross>) {
-        let min_drill_z_coords = CrossObject::take_min_drill(&crosses)
-            .coordinate.z_coord;
+        // But in any case, we will sort again Cross coordinates in the next steps
 
-        let mut to_be_delete_index: i32 = -1;  // dummy var
+        let mut min_axis_value: f64 = self.data.first().unwrap().get_minimum_by_axis(&axis).clone();
 
-        for (index, e) in crosses.iter().enumerate() {
-            if e.coordinate.z_coord < min_drill_z_coords {
-                println!("deeper than min drill : {:?}", e);
-                to_be_delete_index = index as i32;
+        for c in self.data.iter() {
+            let c_min_axis_value: f64 = c.get_minimum_by_axis(&axis).clone();
+
+            if c_min_axis_value.le(&min_axis_value) {
+                min_axis_value = c_min_axis_value;
             }
         }
+        min_axis_value
 
-        if to_be_delete_index as i32 != -1 {
-            crosses.remove(to_be_delete_index as usize);
+    }
+
+    fn get_deeper_than_min_drill(&self, min_drill_value: &f64) -> Vec<i32>{
+        // axis -> Z
+        let mut wrong_crosses: Vec<i32> = vec![]; // will store group numbers
+
+        // reading
+        for cross in self.data.iter() {
+            let min_z_value_of_c = cross.get_minimum_by_axis(&Axis::Z);
+            if min_z_value_of_c.le(min_drill_value) {
+                wrong_crosses.push(cross.group_no.clone());
+            }
         }
+        wrong_crosses
+    }
+
+    fn remove_crosses_by_group_numbers(&mut self, group_number: Vec<i32>) {
+        // removing
+        self.data.retain(|c| group_number.contains(&&c.group_no));
     }
 }
 
@@ -118,9 +183,7 @@ impl CrossInformation {
         // our data
         let mut cross_objects: Vec<Cross> = vec![];
 
-        let cross_str_path: &String = &self.path;
-
-        let file = File::open(cross_str_path)?;
+        let file = File::open(&self.path)?;
         let reader = BufReader::new(file);
         let mut lines = reader.lines();
 
@@ -129,29 +192,37 @@ impl CrossInformation {
         lines.next();
 
         let mut group_no = 0;
-        let mut cross_id = 0;
+        let mut vertex_id = 0;
+        let mut temp_coords: Vec<CrossCoordinate> = vec![];
 
         for line in lines {
             let record = line.expect("Failed to reading line of str file");
-            cross_id += 1;
 
             if record.contains(&self.seperator) {
+                // cleaning
                 group_no += 1;
+                vertex_id = 0;
+
+                if temp_coords.len() > 1 {
+                    let cross = Cross::new(group_no, temp_coords.clone());
+
+                    if cross_objects.contains(&cross) == false && self.duplicate_avoiding {
+                        // avoiding duplicates
+                        cross_objects.push(cross);
+                    }
+                    temp_coords.clear();
+                }
+
             } else {
+                vertex_id += 1;
                 let record: Vec<String> = record.split(",").map(|s| s.trim().to_string()).collect();
 
                 // println!("record : {:?}", record);
                 let x: f64 = record[1].parse().expect("x icin numerik deger çevirilemedi");
                 let y: f64 = record[2].parse().expect("y icin numerik deger çevirilemedi");
                 let z: f64 = record[3].parse().expect("z icin numerik deger çevirilemedi");
+                temp_coords.push(CrossCoordinate::new(x, y, z, vertex_id));
 
-                let coord = CrossCoordinate::new(x, y, z);
-                let cross = Cross::new(group_no, coord, cross_id);
-
-                if cross_objects.contains(&cross) == false && self.duplicate_avoiding {
-                    // avoiding duplicates
-                    cross_objects.push(cross);
-                }
             }
         }
 
@@ -160,7 +231,7 @@ impl CrossInformation {
 }
 
 #[derive(Debug)]
-struct Extent {
+pub struct Extent {
     min_x: f64,
     min_y: f64,
     min_z: f64,
@@ -174,75 +245,33 @@ struct Extent {
 #[derive(Debug, PartialEq)]
 pub struct Cross {
     group_no: i32,
-    coordinate: CrossCoordinate,
-    cross_id: i32,
+    coordinate: Vec<CrossCoordinate>,
 }
 
 impl Cross {
-    fn new(group_no: i32, coordinate: CrossCoordinate, cross_id: i32) -> Cross {
+    fn new(group_no: i32, coordinate: Vec<CrossCoordinate>) -> Cross {
         Cross {
             group_no,
             coordinate,
-            cross_id,
         }
     }
 
-    pub fn get_minimum_xs(crosses: &Vec<Cross>) -> f64 {
-        let mut xs = Cross::give_all_xs(crosses);
-
-        xs.first().unwrap().clone()
-    }
-
-    pub fn get_minimum_ys(crosses: &Vec<Cross>) -> f64 {
-        let mut ys = Cross::give_all_ys(crosses);
-
-        ys.first().unwrap().clone()
-    }
-
-    pub fn get_minimum_zs(crosses: &Vec<Cross>) -> f64 {
-        let mut zs = Cross::give_all_zs(crosses);
-
-        zs.first().unwrap().clone()
-    }
-
-    pub fn get_maximum_xs(crosses: &Vec<Cross>) -> f64 {
-        let mut xs = Cross::give_all_xs(crosses);
-
-        xs.last().unwrap().clone()
-    }
-
-    pub fn get_maximum_ys(crosses: &Vec<Cross>) -> f64 {
-        let mut zs = Cross::give_all_zs(crosses);
-
-        zs.last().unwrap().clone()
-    }
-
-    pub fn get_maximum_zs(crosses: &Vec<Cross>) -> f64 {
-        let mut zs = Cross::give_all_zs(crosses);
-
-        zs.last().unwrap().clone()
-    }
-
-    pub fn find_model_frame(crosses: &Vec<Cross>) -> Extent
-    {
-        let min_x = Cross::get_minimum_xs(crosses);
-        let min_y = Cross::get_minimum_ys(crosses);
-        let min_z = Cross::get_minimum_zs(crosses);
-
-        let max_x = Cross::get_maximum_xs(crosses);
-        let max_y = Cross::get_maximum_ys(crosses);
-        let max_z = Cross::get_maximum_zs(crosses);
-
-        Extent {
-            min_x,
-            min_y,
-            min_z,
-
-            max_x,
-            max_y,
-            max_z
+    fn get_min_one <'a> (v1: &'a f64, v2: &'a f64) -> &'a f64 {
+        // just get little one
+        if v1.le(v2) {
+            v1
+        } else {
+            v2
         }
+    }
 
+    fn get_max_one <'a> (v1: &'a f64, v2: &'a f64) -> &'a f64 {
+        // just get little one
+        if v1.ge(v2) {
+            v1
+        } else {
+            v2
+        }
     }
 
     pub fn find_two_cross_frame(&self, cross_two: &Cross) -> Extent {
@@ -250,39 +279,14 @@ impl Cross {
         It is used to determine one rectangular frame consists two cross
 
         */
-        let min_x: f64 = if self.coordinate.x_coord.le(&cross_two.coordinate.x_coord) {
-            self.coordinate.x_coord.clone()
-        } else {
-            cross_two.coordinate.x_coord.clone()
-        };
+        // minimums
+        let min_x = Cross::get_min_one(&self.give_minimum_x_value(), &cross_two.give_minimum_x_value()).clone();
+        let min_y = Cross::get_min_one(&self.give_minimum_y_value(), &cross_two.give_minimum_y_value()).clone();
+        let min_z = Cross::get_min_one(&self.give_minimum_z_value(), &cross_two.give_minimum_z_value()).clone();
 
-        let min_y: f64 = if self.coordinate.y_coord.le(&cross_two.coordinate.y_coord) {
-            self.coordinate.y_coord.clone()
-        } else {
-            cross_two.coordinate.y_coord.clone()
-        };
-        let min_z: f64 = if self.coordinate.z_coord.le(&cross_two.coordinate.z_coord) {
-            self.coordinate.z_coord.clone()
-        } else {
-            cross_two.coordinate.z_coord.clone()
-        };
-
-        let max_x: f64 = if self.coordinate.x_coord.ge(&cross_two.coordinate.x_coord) {
-            self.coordinate.x_coord.clone()
-        } else {
-            cross_two.coordinate.x_coord.clone()
-        };
-        let max_y: f64 = if self.coordinate.y_coord.ge(&cross_two.coordinate.y_coord) {
-            self.coordinate.y_coord.clone()
-        } else {
-            cross_two.coordinate.y_coord.clone()
-        };
-        let max_z: f64 = if self.coordinate.z_coord.ge(&cross_two.coordinate.z_coord) {
-            self.coordinate.z_coord.clone()
-        } else {
-            cross_two.coordinate.z_coord.clone()
-        };
-
+        let max_x = Cross::get_max_one(&self.give_maximum_x_value(), &cross_two.give_maximum_x_value()).clone();
+        let max_y = Cross::get_max_one(&self.give_maximum_y_value(), &cross_two.give_maximum_y_value()).clone();
+        let max_z = Cross::get_max_one(&self.give_maximum_z_value(), &cross_two.give_maximum_z_value()).clone();
 
         Extent {
             min_x,
@@ -295,55 +299,119 @@ impl Cross {
         }
     }
 
-    fn give_all_xs(crosses: &Vec<Cross>) -> Vec<f64> {
-        let mut v: Vec<f64> = vec![];
-        for i in crosses {
-            v.push(i.coordinate.x_coord)
-        }
+    fn get_minimum_by_axis(&self, axis: &Axis) -> f64 {
+        let min_axis_value = match axis {
+            Axis::X => {
+                self.give_minimum_x_value()
+            }
 
-        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            Axis::Y => {
+                self.give_minimum_y_value()
+            }
 
-        v
+            Axis::Z => {
+                self.give_minimum_z_value()
+            }
+        };
+
+        min_axis_value
     }
 
-    fn give_all_ys(crosses: &Vec<Cross>) -> Vec<f64> {
-        let mut v: Vec<f64> = vec![];
-        for i in crosses {
-            v.push(i.coordinate.y_coord)
-        }
-
+    fn sort_coordinates(v: &mut Vec<&f64>) {
         v.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
-        v
     }
 
-    fn give_all_zs(crosses: &Vec<Cross>) -> Vec<f64> {
-        // sorting active
-        let mut v: Vec<f64> = vec![];
-        for i in crosses {
-            v.push(i.coordinate.z_coord)
+    fn give_minimum_z_value(&self) -> f64 {
+        let mut min_z = self.coordinate.first().unwrap().z_coord.clone();
+        
+        for i in self.coordinate.iter() {
+            if i.z_coord.le(&min_z) {
+                min_z = i.z_coord;
+            }
         }
-
-        v.sort_by(|a, b| a.partial_cmp(b).unwrap());
-
-        v
+        min_z
     }
+
+    fn give_minimum_x_value(&self) -> f64 {
+        let mut min_x = self.coordinate.first().unwrap().x_coord.clone();
+
+        for i in self.coordinate.iter() {
+            if i.x_coord.le(&min_x) {
+                min_x = i.x_coord;
+            }
+        }
+        min_x
+    }
+
+    fn give_minimum_y_value(&self) -> f64 {
+        let mut min_y = self.coordinate.first().unwrap().y_coord.clone();
+
+        for i in self.coordinate.iter() {
+            if i.y_coord.le(&min_y) {
+                min_y = i.y_coord;
+            }
+        }
+        min_y
+    }
+
+    pub fn give_maximum_z_value(&self) -> f64 {
+        let mut max_z = self.coordinate.first().unwrap().z_coord.clone();
+
+        for i in self.coordinate.iter() {
+            if i.z_coord.le(&max_z) {
+                max_z = i.z_coord;
+            }
+        }
+        max_z
+    }
+
+    pub fn give_maximum_x_value(&self) -> f64 {
+        let mut max_x = self.coordinate.first().unwrap().x_coord.clone();
+
+        for i in self.coordinate.iter() {
+            if i.x_coord.le(&max_x) {
+                max_x = i.x_coord;
+            }
+        }
+        max_x
+    }
+
+    pub fn give_maximum_y_value(&self) -> f64 {
+        let mut max_y = self.coordinate.first().unwrap().y_coord.clone();
+
+        for i in self.coordinate.iter() {
+            if i.y_coord.le(&max_y) {
+                max_y = i.y_coord;
+            }
+        }
+        max_y
+    }
+
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 struct CrossCoordinate {
     x_coord: f64,
     y_coord: f64,
     z_coord: f64,
+    vertex_id: i32
+}
+
+enum Axis {
+    X,
+    Y,
+    Z
 }
 
 impl CrossCoordinate {
-    fn new(x: f64, y: f64, z: f64) -> CrossCoordinate {
+    fn new(x: f64, y: f64, z: f64, vertex_id: i32) -> CrossCoordinate {
         CrossCoordinate {
             x_coord: x,
             y_coord: y,
             z_coord: z,
+            vertex_id
         }
+
     }
 
     pub fn eq_test(&self, coordinate: &CrossCoordinate) -> bool {
@@ -368,7 +436,7 @@ impl Display for CrossCoordinate {
 impl Display for Cross {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "Cross no : {} \n\
-                   coordinate : {}", self.group_no, self.coordinate)
+                   coordinate : {:?}", self.group_no, self.coordinate)
     }
 }
 
@@ -406,7 +474,7 @@ mod tests {
         let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
         let cross_info = CrossInformation::new_from_config(&config_object);
-        let cross_object = CrossObject::new(cross_info);
+        let cross_object = CrossObject::new(cross_info, None);
         println!("cross sections info : {:?}", &cross_object.info);
         for c in &cross_object.data {
             println!("section : {:?}", c);
@@ -420,7 +488,7 @@ mod tests {
         let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
         let cross_info = CrossInformation::new_from_config(&config_object);
-        let cross_object = CrossObject::new(cross_info);
+        let cross_object = CrossObject::new(cross_info, None);
 
         for i in 1..cross_object.data.len() {
             let c1 = &cross_object.data[i];
@@ -429,7 +497,7 @@ mod tests {
             // println!("before z: {}", c1.coordinate.z_coord);
             // println!("now z: {}", c2.coordinate.z_coord);
 
-            assert!(c1.coordinate.z_coord >= c2.coordinate.z_coord);
+            assert!(c1.give_minimum_z_value().ge(&c2.give_minimum_z_value()));
         }
     }
 }

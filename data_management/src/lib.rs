@@ -78,7 +78,7 @@ pub mod lego_tests {
         let legoconfig: LegoConfig =  LegoConfig::new(String::from(TEST_CONFIG_PATH));
 
         let cross_info = CrossInformation::new_from_config(&legoconfig);
-        let cross_object = CrossObject::new(cross_info);
+        let cross_object = CrossObject::new(cross_info, None);
 
         cross_object
     }

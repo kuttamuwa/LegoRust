@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/reader/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/reader/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/reader/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/data_management/reader/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/data_management/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/data_management/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/data_management/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/data_management/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/lego_config/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/LegoConfig/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/LegoConfig/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/LegoConfig/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/lego_config/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/lego_config/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/lego_config/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/triangulation/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/triangulation/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/triangulation/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/triangulation/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/dbman/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dbman/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dbman/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/dbman/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/data_management/target" />
+      <excludeFolder url="file://$MODULE_DIR$/dbman/target" />
+      <excludeFolder url="file://$MODULE_DIR$/lego_config/target" />
+      <excludeFolder url="file://$MODULE_DIR$/src/data_management/reader/target" />
+      <excludeFolder url="file://$MODULE_DIR$/src/data_management/target" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+      <excludeFolder url="file://$MODULE_DIR$/triangulation/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

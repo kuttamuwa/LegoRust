@@ -5,16 +5,18 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 use lego_config::read::{DataManagementObjects, LegoConfig};
+use geo::{LineString, Point, Coordinate, Polygon};
+use geo::convexhull::ConvexHull;
 
 #[derive(Debug)]
 pub struct CrossObject {
-    info: CrossInformation,
-    data: Vec<Cross>,
+    pub info: CrossInformation,
+    pub data: Vec<Cross>,
 }
 
 impl CrossObject {
-    pub(crate) fn new(info: CrossInformation, min_drill_z: Option<f64>) -> CrossObject {
-        let mut data = info.read()
+    pub fn new(info: CrossInformation, min_drill_z: Option<f64>) -> CrossObject {
+        let data = info.read()
             .expect("Error occured while reading cross section ");
 
         // creating object. but we need to do some initial things.
@@ -37,7 +39,6 @@ impl CrossObject {
                 // removing crosses has z coordinate are bigger than minimum z coordinate of drills
                 let wrong_cases = object.get_deeper_than_min_drill(&t);
                 println!("wrong cases : {:?}", wrong_cases);
-
             }
             None => println!("We will not remove crosses deeper than minimum drill value \
             which is not specified ")
@@ -50,7 +51,6 @@ impl CrossObject {
         //     println!("{}", &data[i]);
         // }
         object
-
     }
 
     fn get_cross_by_groupno(&self, group_no: i32) -> Option<&Cross> {
@@ -84,9 +84,8 @@ impl CrossObject {
 
             max_x,
             max_y,
-            max_z
+            max_z,
         }
-
     }
 
     fn sort_crosses_data(&mut self, axis: Axis) {
@@ -95,7 +94,6 @@ impl CrossObject {
 
             c1_max_value.partial_cmp(&c2_max_value).unwrap()
         });
-
     }
 
     fn take_duplicates(&self) -> Vec<&Cross> {
@@ -129,10 +127,9 @@ impl CrossObject {
             }
         }
         min_axis_value
-
     }
 
-    fn get_deeper_than_min_drill(&self, min_drill_value: &f64) -> Vec<i32>{
+    fn get_deeper_than_min_drill(&self, min_drill_value: &f64) -> Vec<i32> {
         // axis -> Z
         let mut wrong_crosses: Vec<i32> = vec![]; // will store group numbers
 
@@ -170,7 +167,7 @@ impl CrossInformation {
         }
     }
 
-    pub(crate) fn new_from_config(config: &LegoConfig) -> CrossInformation {
+    pub fn new_from_config(config: &LegoConfig) -> CrossInformation {
         // getting mining information
         let path = config.get_cross_section_str_path();
         let mining_type = config.get_mining_type();
@@ -193,7 +190,7 @@ impl CrossInformation {
 
         let mut group_no = 0;
         let mut vertex_id = 0;
-        let mut temp_coords: Vec<CrossCoordinate> = vec![];
+        let mut temp_coords: Vec<CrossCoordinate3d> = vec![];
 
         for line in lines {
             let record = line.expect("Failed to reading line of str file");
@@ -212,7 +209,6 @@ impl CrossInformation {
                     }
                     temp_coords.clear();
                 }
-
             } else {
                 vertex_id += 1;
                 let record: Vec<String> = record.split(",").map(|s| s.trim().to_string()).collect();
@@ -221,8 +217,7 @@ impl CrossInformation {
                 let x: f64 = record[1].parse().expect("x icin numerik deger çevirilemedi");
                 let y: f64 = record[2].parse().expect("y icin numerik deger çevirilemedi");
                 let z: f64 = record[3].parse().expect("z icin numerik deger çevirilemedi");
-                temp_coords.push(CrossCoordinate::new(x, y, z, vertex_id));
-
+                temp_coords.push(CrossCoordinate3d::new(x, y, z, vertex_id));
             }
         }
 
@@ -244,19 +239,19 @@ pub struct Extent {
 
 #[derive(Debug, PartialEq)]
 pub struct Cross {
-    group_no: i32,
-    coordinate: Vec<CrossCoordinate>,
+    pub group_no: i32,
+    pub coordinate: Vec<CrossCoordinate3d>,
 }
 
 impl Cross {
-    fn new(group_no: i32, coordinate: Vec<CrossCoordinate>) -> Cross {
+    fn new(group_no: i32, coordinate: Vec<CrossCoordinate3d>) -> Cross {
         Cross {
             group_no,
             coordinate,
         }
     }
 
-    fn get_min_one <'a> (v1: &'a f64, v2: &'a f64) -> &'a f64 {
+    fn get_min_one<'a>(v1: &'a f64, v2: &'a f64) -> &'a f64 {
         // just get little one
         if v1.le(v2) {
             v1
@@ -265,7 +260,7 @@ impl Cross {
         }
     }
 
-    fn get_max_one <'a> (v1: &'a f64, v2: &'a f64) -> &'a f64 {
+    fn get_max_one<'a>(v1: &'a f64, v2: &'a f64) -> &'a f64 {
         // just get little one
         if v1.ge(v2) {
             v1
@@ -295,7 +290,7 @@ impl Cross {
 
             max_x,
             max_y,
-            max_z
+            max_z,
         }
     }
 
@@ -321,9 +316,9 @@ impl Cross {
         v.sort_by(|a, b| a.partial_cmp(b).unwrap());
     }
 
-    fn give_minimum_z_value(&self) -> f64 {
+    pub fn give_minimum_z_value(&self) -> f64 {
         let mut min_z = self.coordinate.first().unwrap().z_coord.clone();
-        
+
         for i in self.coordinate.iter() {
             if i.z_coord.le(&min_z) {
                 min_z = i.z_coord;
@@ -332,7 +327,7 @@ impl Cross {
         min_z
     }
 
-    fn give_minimum_x_value(&self) -> f64 {
+    pub fn give_minimum_x_value(&self) -> f64 {
         let mut min_x = self.coordinate.first().unwrap().x_coord.clone();
 
         for i in self.coordinate.iter() {
@@ -343,7 +338,7 @@ impl Cross {
         min_x
     }
 
-    fn give_minimum_y_value(&self) -> f64 {
+    pub fn give_minimum_y_value(&self) -> f64 {
         let mut min_y = self.coordinate.first().unwrap().y_coord.clone();
 
         for i in self.coordinate.iter() {
@@ -387,34 +382,125 @@ impl Cross {
         max_y
     }
 
+    pub fn find_orient_2d(&self) -> Axis {
+        let (min_x, max_x) = (self.give_minimum_x_value(), self.give_maximum_x_value());
+        let (min_y, max_y) = (self.give_minimum_y_value(), self.give_maximum_y_value());
+
+        let (delta_x, delta_y) = (f64::abs(max_x - min_x), f64::abs(max_y - min_y));
+
+        if delta_x >= delta_y {
+            Axis::X
+        } else {
+            Axis::Y
+        }
+    }
+
+    pub fn difference_self_minimum_axis_value_from_other_cross(&self, other_cross: &Cross, axis: Axis) -> f64 {
+        let self_min_axis: f64;
+        let other_min_axis: f64;
+
+        if axis == Axis::X {
+            self_min_axis = self.give_minimum_x_value();
+            other_min_axis = other_cross.give_minimum_x_value();
+        } else if axis == Axis::Y {
+            self_min_axis = self.give_minimum_y_value();
+            other_min_axis = other_cross.give_minimum_y_value();
+        } else {
+            self_min_axis = self.give_minimum_z_value();
+            other_min_axis = other_cross.give_minimum_z_value();
+        }
+
+        self_min_axis - other_min_axis
+    }
+
+    pub fn clone_coordinates_2d(&self) -> Vec<CrossCoordinate2d> {
+        let mut cross_coordinate_2d: Vec<CrossCoordinate2d> = vec![];
+
+        for i in self.coordinate.iter() {
+            let c = CrossCoordinate2d::new(i.x_coord, i.y_coord, i.vertex_id);
+            cross_coordinate_2d.push(c);
+        }
+
+        cross_coordinate_2d
+    }
+
+    pub fn clone_coordinates_2d_with_points(&self) -> Vec<Coordinate<f64>> {
+        let mut cross_coordinate_2d: Vec<Coordinate<f64>> = vec![];
+
+        for i in &self.coordinate {
+            let p = Point::new(i.x_coord.clone(), i.y_coord.clone());
+            cross_coordinate_2d.push(p.0);
+        }
+
+        cross_coordinate_2d
+    }
+
+    pub fn create_line_string(&self) -> LineString<f64> {
+        let coordinates_2d: Vec<Coordinate<f64>> = self.clone_coordinates_2d_with_points();
+        LineString(coordinates_2d)
+    }
+
+    pub fn create_polygon_convex_hull(&self) -> Polygon<f64> {
+        let line_strings = self.create_line_string();
+        let poly = Polygon::new(line_strings, vec![]).convex_hull();  // no interior rings
+        poly
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-struct CrossCoordinate {
-    x_coord: f64,
-    y_coord: f64,
-    z_coord: f64,
-    vertex_id: i32
+pub struct CrossCoordinate3d {
+    pub x_coord: f64,
+    pub y_coord: f64,
+    pub z_coord: f64,
+    pub vertex_id: i32,
 }
 
-enum Axis {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct CrossCoordinate2d {
+    pub x_coord: f64,
+    pub y_coord: f64,
+    pub vertex_id: i32,
+}
+
+impl CrossCoordinate2d {
+    pub fn new(x_coord: f64, y_coord: f64, vertex_id: i32) -> CrossCoordinate2d {
+        CrossCoordinate2d {
+            x_coord,
+            y_coord,
+            vertex_id,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+pub enum Axis {
     X,
     Y,
-    Z
+    Z,
 }
 
-impl CrossCoordinate {
-    fn new(x: f64, y: f64, z: f64, vertex_id: i32) -> CrossCoordinate {
-        CrossCoordinate {
+impl Display for Axis {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match *self {
+            Axis::X => f.write_str("X"),
+            Axis::Y => f.write_str("Y"),
+            Axis::Z => f.write_str("Z")
+        }
+    }
+}
+
+
+impl CrossCoordinate3d {
+    fn new(x: f64, y: f64, z: f64, vertex_id: i32) -> CrossCoordinate3d {
+        CrossCoordinate3d {
             x_coord: x,
             y_coord: y,
             z_coord: z,
-            vertex_id
+            vertex_id,
         }
-
     }
 
-    pub fn eq_test(&self, coordinate: &CrossCoordinate) -> bool {
+    pub fn eq_test(&self, coordinate: &CrossCoordinate3d) -> bool {
         if (self.x_coord == coordinate.x_coord) && (self.y_coord == coordinate.y_coord) &&
             (self.z_coord == coordinate.z_coord) {
             true
@@ -424,7 +510,7 @@ impl CrossCoordinate {
     }
 }
 
-impl Display for CrossCoordinate {
+impl Display for CrossCoordinate3d {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "x : {} \n\
                    y : {} \n\
@@ -450,10 +536,6 @@ impl Display for CrossObject {
 
 
 impl Display for CrossInformation {
-    // path: String,
-    //     mining_type: String,
-    //     seperator: char
-
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "path: {} \n\
                    mining type : {} \n\
@@ -466,6 +548,8 @@ mod tests {
     use lego_config::read::LegoConfig;
 
     use crate::str::cross_reader::{CrossInformation, CrossObject};
+    use ncollide3d;
+    use na;
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 

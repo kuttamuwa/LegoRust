@@ -32,7 +32,7 @@ pub mod lego_tests {
     use crate::excels::lytho_reader::{LythologyObject, LythologyInformation};
     use crate::excels::rawsample_reader::{RawSampleObject, RawSampleInformation};
     use crate::excels::slope_reader::{SlopeObject, SlopeInformation};
-    use crate::str::cross_reader::{CrossObject, CrossInformation};
+    use crate::str::cross_reader::{CrossObject, CrossInformation, ICrossInformation};
     use crate::str::composite_reader::{CompositeObject, CompositeInformation};
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";

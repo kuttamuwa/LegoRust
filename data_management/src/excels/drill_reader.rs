@@ -7,6 +7,10 @@ use std::string::ToString;
 
 use csv::{Reader, StringRecord};
 use lego_config::read::{LegoConfig, DataManagementObjects};
+use plotly::{Plot, Scatter};
+use crate::excels::excel_traits::WebDraw;
+use plotly::{Surface, Layout};
+use plotly::surface::{Lighting, PlaneContours, PlaneProject, SurfaceContours};
 
 pub struct DrillObject {
     info: DrillInformation,
@@ -23,6 +27,41 @@ impl DrillObject {
     }
 }
 
+impl WebDraw for DrillObject {
+    fn generate_topograpy(&self, auto_show: bool) {
+        let x_coords: Vec<f64> = self.data.iter().map(|e| e.coordinate.x_coord).collect();
+        let y_coords: Vec<f64> = self.data.iter().map(|e| e.coordinate.y_coord).collect();
+        let z_coords: Vec<f64> = self.data.iter().map(|e| e.coordinate.z_coord).collect();
+
+        // todo: burayı halledemedim.
+        let mut z_coords_v2: Vec<Vec<f64>> = Vec::new();
+        for i in 0..x_coords.len() {
+            let mut iz: Vec<f64> = Vec::new();
+            for k in 0..x_coords.len() {
+                // let xf = (xi as f64) / n as f64;
+                // let yf = (yi as f64) / n as f64;
+                let cz: f64 = self.data.get(i).unwrap().coordinate.z_coord;
+                iz.push(cz);
+            }
+            z_coords_v2.push(iz);
+        }
+
+        let trace = Surface::new(z_coords_v2).x(x_coords).y(y_coords).visible(true)
+            .hide_surface(false).lighting(Lighting::new())
+            .contours(SurfaceContours::new().z(PlaneContours::new().show(true)
+                                                   .use_colormap(true)
+                                                   .project(PlaneProject::new().z(true))));
+
+
+        let mut plot = Plot::new();
+        plot.set_layout(Layout::new());
+        plot.add_trace(trace);
+
+        if auto_show {
+            plot.show();
+        }
+    }
+}
 
 pub struct DrillInformation {
     path: String,
@@ -170,6 +209,7 @@ impl Display for Drill {
 mod tests {
     use crate::excels::drill_reader::{DrillInformation, DrillObject};
     use lego_config::read::{LegoConfig};
+    use crate::excels::excel_traits::WebDraw;
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 
@@ -181,6 +221,17 @@ mod tests {
 
         let drill_object = DrillObject::new(d_info);
         println!("drill object : {}", drill_object);
+
+    }
+
+    #[test]
+    fn create_topo () {
+        // config path
+        let config_object = LegoConfig::new(String::from(TEST_CONFIG_PATH));
+        let d_info = DrillInformation::new_from_config(&config_object);
+
+        let drill_object = DrillObject::new(d_info);
+        drill_object.generate_topograpy(true);
 
     }
 }

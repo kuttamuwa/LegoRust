@@ -16,6 +16,8 @@ pub mod excels {
     pub mod rawsample_reader;
 
     pub mod slope_reader;
+
+    pub mod excel_traits;
 }
 
 pub mod str {
@@ -23,7 +25,7 @@ pub mod str {
 
     pub mod composite_reader;
 
-    pub mod dat_management_traits;
+    pub mod str_traits;
 }
 
 pub mod lego_tests {
@@ -32,8 +34,10 @@ pub mod lego_tests {
     use crate::excels::lytho_reader::{LythologyObject, LythologyInformation};
     use crate::excels::rawsample_reader::{RawSampleObject, RawSampleInformation};
     use crate::excels::slope_reader::{SlopeObject, SlopeInformation};
-    use crate::str::cross_reader::{CrossObject, CrossInformation, ICrossInformation};
+    use crate::str::cross_reader::cross_main::{CrossObject};
+    use crate::str::cross_reader::info::{CrossInformation};
     use crate::str::composite_reader::{CompositeObject, CompositeInformation};
+    use crate::str::str_traits::ICrossInformation;
 
     const TEST_CONFIG_PATH: &str = "/home/umut/CLionProjects/LegoRust/lego_config/test_settings.toml";
 

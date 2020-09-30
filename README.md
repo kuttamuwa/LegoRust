@@ -1,2 +1,2 @@
 # LegoRust
-Legovis will be rise again with Rust.
+Legovis will rise again with Rust.
